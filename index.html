@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>People in the House – Task</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #111827, #020617 60%);
+      color: #111827;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 450px;
+      background: rgba(15, 23, 42, 0.97);
+      border-radius: 18px;
+      padding: 20px 22px 24px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: #e5e7eb;
+    }
+
+    h1 {
+      margin: 0 0 2px;
+      font-size: 1.25rem;
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .intro {
+      margin-bottom: 10px;
+      font-size: 0.8rem;
+    }
+
+    .intro ul {
+      margin: 4px 0 0 18px;
+      padding: 0;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+
+    .intro ul li { margin-bottom: 2px; }
+
+    .game-area {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .scene-card,
+    .panel-card {
+      background: radial-gradient(circle at top left, #020617, #020617 55%, #020617);
+      border-radius: 16px;
+      padding: 14px 16px 16px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scene-header,
+    .panel-header {
+      font-size: 0.8rem;
+      color: #9ca3af;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* --- Phone / Screen --- */
+
+    .scene-inner {
+      border-radius: 14px;
+      padding: 10px 10px 14px;
+      border: 1px solid rgba(30, 64, 175, 0.7);
+      background: radial-gradient(circle at top, #020617 0%, #020617 40%, #020617 100%);
+      display: flex;
+      justify-content: center;
+    }
+
+    .phone {
+      width: 100%;
+      max-width: 420px;
+      height: 350px;
+      border-radius: 30px;
+      background: #020617;
+      padding: 10px 6px;
+      box-shadow: 0 20px 34px rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone-screen {
+      flex: 1;
+      height: 100%;
+      background: #f9fafb;
+      border-radius: 22px;
+      box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      position: relative; /* für Overlays */
+      overflow: hidden;   /* wichtig: Personen sauber rein/raus */
+    }
+
+    /* Feedback Overlay über dem Haus */
+    .feedback-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 100;
+      min-width: 280px;
+      padding: 25px 35px;
+      border-radius: 16px;
+      font-size: 2.2rem;
+      font-weight: 800;
+      text-align: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      white-space: pre-line; /* damit \n angezeigt wird */
+    }
+
+    .feedback-overlay.ok {
+      color: #ffffff;
+      background: rgba(34, 197, 94, 0.95);
+      border: 3px solid #16a34a;
+      box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
+    }
+
+    .feedback-overlay.err {
+      color: #ffffff;
+      background: rgba(239, 68, 68, 0.95);
+      border: 3px solid #dc2626;
+      box-shadow: 0 0 40px rgba(239, 68, 68, 0.6);
+    }
+
+    .feedback-overlay.neutral {
+      color: #111827;
+      background: rgba(229, 231, 235, 0.95);
+      border: 3px solid #9ca3af;
+      box-shadow: 0 0 40px rgba(148, 163, 184, 0.45);
+    }
+
+    .feedback-overlay.small {
+      font-size: 1.25rem;
+      padding: 18px 22px;
+      min-width: 260px;
+    }
+
+    .feedback-overlay.show { opacity: 1; }
+
+    /* =========================
+       WERBE-OVERLAY (JPG + TIMER)
+       ========================= */
+    .ad-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.88);
+      z-index: 1000;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .ad-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+
+    .ad-container {
+      position: relative;
+      width: min(900px, 92vw);
+      max-height: 90vh;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    .ad-image {
+      width: 100%;
+      height: auto;
+      max-height: 90vh;
+      object-fit: contain;
+      display: block;
+      user-select: none;
+    }
+
+    /* Countdown oben rechts */
+    .ad-timer {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 1001;
+
+      background: rgba(255, 255, 255, 0.92);
+      border: 2px solid rgba(15, 23, 42, 0.35);
+      border-radius: 999px;
+
+      min-width: 56px;
+      height: 56px;
+      padding: 0 12px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0f172a;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .scene-layout {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0px 8px;
+      gap: 10px;
+    }
+
+    .lane {
+      position: relative;
+      flex: 0 0 clamp(60px, 20vw, 100px);
+      height: 100%;
+    }
+
+    .lane::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 8px;
+      right: 8px;
+      height: 4px;
+      background: #d1d5db;
+      border-radius: 999px;
+    }
+
+    .house-icon-wrapper {
+      position: relative;
+      flex: 0 0 clamp(140px, 42vw, 200px);
+      height: clamp(140px, 42vw, 200px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3; /* Haus über Personen */
+    }
+
+    .house-icon { width: 100%; height: 100%; display: block; }
+    .house-icon * { fill: #020617; }
+
+    /* Personen (Animation per JS) */
+    .person-group {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      display: flex;
+      gap: 2px;
+      opacity: 1;
+      filter: drop-shadow(0 3px 4px rgba(15, 23, 42, 0.45));
+      z-index: 2; /* unter dem Haus */
+      will-change: transform, opacity;
+      pointer-events: none;
+      transform: translate(-200px, -50%); /* Startwert (wird von JS überschrieben) */
+    }
+
+    .person-icon { width: 50px; height: 100px; }
+    .person-icon * {
+      fill: none;
+      stroke: #020617;
+      stroke-width: 2.8;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .controls {
+      margin-top: 8px;
+      border-top: 1px dashed rgba(55, 65, 81, 0.8);
+      padding-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      color: #e5e7eb;
+      box-shadow: 0 10px 18px rgba(79, 70, 229, 0.55);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
+      white-space: nowrap;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(79, 70, 229, 0.6);
+      filter: brightness(1.07);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 8px 14px rgba(79, 70, 229, 0.7);
+      filter: brightness(0.97);
+    }
+
+    button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+
+    .btn-secondary {
+      background: rgba(15, 23, 42, 1);
+      border: 1px solid rgba(148, 163, 184, 0.8);
+      box-shadow: none;
+    }
+
+    .hidden { display: none !important; }
+
+    /* Zahlen-Buttons */
+    .number-buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 8px;
+    }
+
+    .number-btn {
+      min-width: 50px;
+      padding: 10px 16px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: 2px solid rgba(99, 102, 241, 0.5);
+      background: rgba(30, 64, 175, 0.2);
+      color: #e5e7eb;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    .number-btn:hover {
+      transform: translateY(-2px);
+      border-color: rgba(129, 140, 248, 0.9);
+      background: rgba(79, 70, 229, 0.4);
+      box-shadow: 0 6px 12px rgba(79, 70, 229, 0.4);
+    }
+
+    .number-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+
+    .number-btn.selected {
+      background: linear-gradient(135deg, #4f46e5, #6366f1);
+      border-color: #818cf8;
+      box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.3);
+    }
+
+    @media (max-width: 480px) {
+      .container { padding: 14px 10px 16px; }
+      .scene-card { padding: 10px 10px 12px; }
+      .scene-inner { padding: 6px; }
+      .scene-layout { padding: 0; gap: 6px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="top-row">
+      <div>
+        <h1>People in the House</h1>
+        <div class="subtitle">Keep track of how many people are currently inside the house.</div>
+      </div>
+    </div>
+
+    <div class="intro" id="intro">
+      <p>In each round you see groups of people entering or leaving the house.</p>
+      <ul>
+        <li>Round 1 starts with 0 people in the house. Each following round continues from the previous round’s final count, so you must remember that number for the next round.</li>
+        <li>The current number inside the house is never shown – you must keep it in mind.</li>
+        <li>At the end of the sequence, type how many people are inside the house now.</li>
+      </ul>
+    </div>
+
+    <!-- Werbe-Overlay (JPG) -->
+    <div class="ad-overlay" id="ad-overlay" aria-hidden="true">
+      <div class="ad-container">
+        <div class="ad-timer" id="ad-timer">12</div>
+        <img class="ad-image" src="ad.jpg" alt="Werbung" draggable="false" />
+      </div>
+    </div>
+
+    <div class="game-area">
+      <div class="scene-card">
+        <div class="scene-header"></div>
+        <div class="scene-inner">
+          <div class="phone">
+            <div class="phone-screen">
+              <!-- Feedback Overlay -->
+              <div class="feedback-overlay" id="feedback"></div>
+
+              <div class="scene-layout">
+                <div class="lane lane-left" id="lane-left"></div>
+
+                <div class="house-icon-wrapper">
+                  <svg viewBox="0 0 100 100" class="house-icon" aria-hidden="true">
+                    <polygon points="10,45 50,15 90,45"></polygon>
+                    <rect x="18" y="45" width="64" height="38" rx="3" ry="3"></rect>
+                    <rect x="27" y="52" width="16" height="14"></rect>
+                    <rect x="57" y="52" width="16" height="14"></rect>
+                    <rect x="44" y="59" width="12" height="24" rx="2" ry="2"></rect>
+                    <rect x="70" y="30" width="10" height="15"></rect>
+                  </svg>
+                </div>
+
+                <div class="lane lane-right" id="lane-right"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls controls-inline">
+          <div id="pre-start-controls">
+            <button id="start-button">▶ Start task</button>
+          </div>
+
+          <div id="answer-controls" class="hidden">
+            <div class="number-buttons" id="number-buttons">
+              <button class="number-btn" data-value="0">0</button>
+              <button class="number-btn" data-value="1">1</button>
+              <button class="number-btn" data-value="2">2</button>
+              <button class="number-btn" data-value="3">3</button>
+              <button class="number-btn" data-value="4">4</button>
+              <button class="number-btn" data-value="5">5</button>
+              <button class="number-btn" data-value="6">6</button>
+              <button class="number-btn" data-value="7">7</button>
+              <button class="number-btn" data-value="8">8</button>
+              <button class="number-btn" data-value="9">9</button>
+              <button class="number-btn" data-value="10">10</button>
+              <button class="number-btn" data-value="11">11</button>
+              <button class="number-btn" data-value="12">12</button>
+              <button class="number-btn" data-value="13">13</button>
+              <button class="number-btn" data-value="14">14</button>
+              <button class="number-btn" data-value="15">15</button>
+              <button class="number-btn" data-value="16">16</button>
+              <button class="number-btn" data-value="17">17</button>
+              <button class="number-btn" data-value="18">18</button>
+            </div>
+          </div>
+
+          <div id="post-game-controls" class="hidden">
+            <button class="btn-secondary" id="restart-button">↻ Play again</button>
+            <button id="download-csv">⬇ Download results (CSV)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ------------------------------
+    // CONFIG
+    // ------------------------------
+    const config = {
+      totalRounds: 8,
+      eventsPerRound: 8,
+      minChange: -3,
+      maxChange: 3,
+      showDurationMs: 1400,          // bleibt drin, wird für Personenbewegung nicht mehr verwendet
+      pauseBetweenEventsMs: 20,
+      initialMin: 0,
+      initialMax: 0,
+    };
+
+    const AD_DURATION_SECONDS = 12;
+    const AD_POST_DELAY_MS = 3000; // NEU: 3 Sekunden Pause nach Werbung
+
+    const PERSON_ICON_HTML = `
+      <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
+        <circle cx="16" cy="10" r="7"></circle>
+        <rect x="10" y="18" width="12" height="18" rx="6" ry="6"></rect>
+        <line x1="10" y1="22" x2="5" y2="38"></line>
+        <line x1="22" y1="22" x2="27" y2="38"></line>
+        <line x1="13" y1="36" x2="10" y2="58"></line>
+        <line x1="19" y1="36" x2="22" y2="58"></line>
+      </svg>
+    `;
+
+    // ------------------------------
+    // STATE
+    // ------------------------------
+    let currentRound = 0;
+    let sequence = [];
+    let sequenceIndex = 0;
+    let startCount = 0;
+    let internalCount = 0;
+    let carryCount = 0;
+    let acceptingInput = false;
+    let responseStartTime = 0;
+    const results = [];
+
+    // DOM
+    const startButton = document.getElementById("start-button");
+    const restartButton = document.getElementById("restart-button");
+    const downloadButton = document.getElementById("download-csv");
+    const preStartControls = document.getElementById("pre-start-controls");
+    const answerControls = document.getElementById("answer-controls");
+    const postGameControls = document.getElementById("post-game-controls");
+    const numberButtons = document.querySelectorAll(".number-btn");
+    const feedbackEl = document.getElementById("feedback");
+    const laneLeft = document.getElementById("lane-left");
+    const laneRight = document.getElementById("lane-right");
+    const introEl = document.getElementById("intro");
+
+    // Animation anchors
+    const phoneScreen = document.querySelector(".phone-screen");
+    const houseWrap = document.querySelector(".house-icon-wrapper");
+
+    // Ad DOM
+    const adOverlay = document.getElementById("ad-overlay");
+    const adTimer = document.getElementById("ad-timer");
+
+    let selectedAnswer = null;
+    let adTimerInterval = null;
+
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function resetFeedback() {
+      feedbackEl.textContent = "";
+      feedbackEl.className = "feedback-overlay";
+    }
+
+    function showFeedback(text, type = "ok", small = false, ms = 0) {
+      feedbackEl.textContent = text;
+      feedbackEl.className = `feedback-overlay ${type} ${small ? "small" : ""} show`.trim();
+      if (ms > 0) {
+        setTimeout(() => feedbackEl.classList.remove("show"), ms);
+      }
+    }
+
+    function hideFeedback() {
+      feedbackEl.classList.remove("show");
+    }
+
+    function hideEvent() {
+      // no-op
+    }
+
+    // =========================
+    // PERSONEN-ANIMATION
+    // - IMMER links -> rechts
+    // - Rein: links -> ins Haus -> verschwinden
+    // - Raus: im Haus starten -> rechts raus -> aus dem Bild
+    // - 3er Gruppe: wird leicht skaliert + engerer Abstand, damit rechts niemand neben dem Haus sichtbar ist
+    // =========================
+    function animatePeople(delta) {
+      const count = Math.abs(delta);
+      const isEnter = delta > 0;
+
+      // NEU: 3er Gruppe kompakter (damit rechts niemand "neben dem Haus" sichtbar wird)
+      const scale = (count === 3) ? 0.82 : 1;
+      const gapPx = (count === 3) ? 0 : 2;
+
+      const group = document.createElement("div");
+      group.className = "person-group";
+      group.style.gap = `${gapPx}px`;
+
+      for (let i = 0; i < count; i++) {
+        group.insertAdjacentHTML("beforeend", PERSON_ICON_HTML);
+      }
+
+      phoneScreen.appendChild(group);
+
+      // Erstmal skalieren, damit Messung die echte (skalierte) Breite berücksichtigt
+      group.style.transform = `translate(0px, -50%) scale(${scale})`;
+      group.style.opacity = "0";
+
+      // Messen, nachdem es im DOM ist
+      const screenRect = phoneScreen.getBoundingClientRect();
+      const houseRect = houseWrap.getBoundingClientRect();
+      const groupRect = group.getBoundingClientRect();
+
+      // Hauszentrum relativ zur phoneScreen
+      const houseCenterX = (houseRect.left - screenRect.left) + (houseRect.width / 2);
+
+      // Zielposition "im Haus" (Gruppe so, dass sie im Hauszentrum liegt)
+      const xInHouse = houseCenterX - (groupRect.width / 2);
+
+      // Start/Ende (immer links -> rechts)
+      const margin = 70;
+      const fromX = isEnter ? (-groupRect.width - margin) : xInHouse;
+      const toX   = isEnter ? xInHouse : (screenRect.width + margin);
+
+      // konstante Geschwindigkeit
+      const speedPxPerSec = 450;
+      const distance = Math.abs(toX - fromX);
+      const duration = (distance / speedPxPerSec) * 1000;
+
+      // Startzustand setzen
+      group.style.transform = `translate(${fromX}px, -50%) scale(${scale})`;
+      group.style.opacity = isEnter ? "1" : "0";
+
+      // Keyframes:
+      // Rein: bleibt sichtbar bis kurz vor Ende, verschwindet dann im Haus
+      // Raus: startet unsichtbar im Haus, wird sehr schnell sichtbar, läuft raus
+      const keyframes = isEnter
+        ? [
+            { transform: `translate(${fromX}px, -50%) scale(${scale})`, opacity: 1, offset: 0 },
+            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 0.85 },
+            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 0, offset: 1 }
+          ]
+        : [
+            { transform: `translate(${fromX}px, -50%) scale(${scale})`, opacity: 0, offset: 0 },
+            { transform: `translate(${fromX + 12}px, -50%) scale(${scale})`, opacity: 1, offset: 0.08 },
+            { transform: `translate(${toX}px, -50%) scale(${scale})`, opacity: 1, offset: 1 }
+          ];
+
+      const anim = group.animate(keyframes, {
+        duration,
+        easing: "linear",
+        fill: "forwards"
+      });
+
+      anim.onfinish = () => group.remove();
+
+      return duration;
+    }
+
+    // Feste Sequenzen
+    function generateSequence() {
+      startCount = carryCount;
+      sequence = [];
+      let current = startCount;
+
+      const fixedSequences = {
+        1: [1, -1, 1],
+        2: [3, -1, -2, 2],
+        3: [1, 1, -2, 1, 2],
+        4: [3, -2, 1, 1, -2, 1],
+        5: [1, 2, -2, 2, -2, 2],
+        6: [2, 3, 2, -2, -1, -2, -1],
+        7: [2, 3, 2, -1, -2, -1, 2, -3],
+        8: [3, 2, -1, -1, -3, 3, -1, -2, -1]
+      };
+
+      if (fixedSequences[currentRound]) {
+        const fixed = fixedSequences[currentRound];
+        for (let i = 0; i < fixed.length; i++) {
+          sequence.push(fixed[i]);
+          current += fixed[i];
+        }
+        internalCount = current;
+        return;
+      }
+
+      // Fallback random
+      for (let i = 0; i < config.eventsPerRound; i++) {
+        const possibleDeltas = [];
+        for (let d = config.minChange; d <= config.maxChange; d++) {
+          if (d === 0) continue;
+          if (current === 0 && d < 0) continue;
+          if (current + d < 0) continue;
+          if (current + d > 18) continue;
+          possibleDeltas.push(d);
+        }
+        let delta;
+        if (possibleDeltas.length === 0) {
+          delta = 1;
+        } else {
+          delta = possibleDeltas[randInt(0, possibleDeltas.length - 1)];
+        }
+        current += delta;
+        sequence.push(delta);
+      }
+      internalCount = current;
+    }
+
+    // =========================
+    // AD HELPERS (12s JPG + TIMER)
+    // =========================
+    function hideAd() {
+      if (adTimerInterval) {
+        clearInterval(adTimerInterval);
+        adTimerInterval = null;
+      }
+      adOverlay.classList.remove("show");
+    }
+
+    function showAdBeforeLastRound() {
+      hideAd();
+
+      adOverlay.classList.add("show");
+      let timeLeft = AD_DURATION_SECONDS;
+      adTimer.textContent = timeLeft;
+
+      adTimerInterval = setInterval(() => {
+        timeLeft--;
+        adTimer.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+          hideAd();
+          // NEU: 3 Sekunden Pause nach Werbung, dann nächste Runde starten
+          setTimeout(() => nextRound(), AD_POST_DELAY_MS);
+        }
+      }, 1000);
+    }
+
+    // ------------------------------
+    // FLOW
+    // ------------------------------
+    function startGame() {
+      hideAd();
+      results.length = 0;
+      currentRound = 0;
+      carryCount = 0;
+
+      resetFeedback();
+
+      preStartControls.classList.add("hidden");
+      answerControls.classList.add("hidden");
+      postGameControls.classList.add("hidden");
+
+      introEl.classList.add("hidden");
+      nextRound();
+    }
+
+    function nextRound() {
+      currentRound++;
+      if (currentRound > config.totalRounds) {
+        endGame();
+        return;
+      }
+
+      generateSequence();
+      sequenceIndex = 0;
+
+      resetFeedback();
+
+      answerControls.classList.add("hidden");
+      acceptingInput = false;
+
+      playSequence();
+    }
+
+    // Wartet auf echte Animationsdauer, damit Aktionen nicht überlappen
+    function playSequence() {
+      if (sequenceIndex >= sequence.length) {
+        answerControls.classList.remove("hidden");
+        selectedAnswer = null;
+        numberButtons.forEach(btn => btn.classList.remove("selected"));
+        acceptingInput = true;
+        responseStartTime = performance.now();
+        hideEvent();
+        return;
+      }
+
+      const delta = sequence[sequenceIndex];
+      const animDuration = animatePeople(delta);
+      sequenceIndex++;
+
+      setTimeout(() => {
+        hideEvent();
+        setTimeout(playSequence, config.pauseBetweenEventsMs);
+      }, animDuration);
+    }
+
+    function handleAnswer() {
+      if (!acceptingInput) return;
+
+      if (selectedAnswer === null) {
+        showFeedback("Please select a number.", "err", true, 1200);
+        return;
+      }
+
+      const userAnswer = selectedAnswer;
+
+      acceptingInput = false;
+      const rt = performance.now() - responseStartTime;
+      const correctCount = internalCount;
+      carryCount = correctCount;
+      const correct = userAnswer === correctCount;
+
+      results.push({
+        round: currentRound,
+        startCount,
+        sequence: [...sequence],
+        correctFinalCount: correctCount,
+        userAnswer,
+        correct,
+        rtMs: Math.round(rt),
+      });
+
+      showFeedback(
+        correct ? `✓ CORRECT: ${correctCount}` : `✗ INCORRECT: ${correctCount}`,
+        correct ? "ok" : "err",
+        false
+      );
+
+      if (currentRound < config.totalRounds) {
+        setTimeout(() => {
+          hideFeedback();
+
+          // Wenn die nächste Runde die letzte ist → Werbung davor
+          if (currentRound + 1 === config.totalRounds) {
+            showAdBeforeLastRound();
+          } else {
+            setTimeout(nextRound, 300);
+          }
+        }, 1200);
+      } else {
+        setTimeout(() => {
+          hideFeedback();
+          setTimeout(endGame, 300);
+        }, 1200);
+      }
+    }
+
+    function endGame() {
+      hideAd();
+
+      const total = results.length;
+      const correctN = results.filter((r) => r.correct).length;
+      const accuracy = total ? Math.round((correctN / total) * 100) : 0;
+
+      // NEU: Password unter Accuracy
+      showFeedback(
+        `Thanks for playing!\nAccuracy: ${accuracy}%\nPassword: Game`,
+        "neutral",
+        true
+      );
+
+      postGameControls.classList.remove("hidden");
+      answerControls.classList.add("hidden");
+      hideEvent();
+    }
+
+    function downloadCSV() {
+      if (!results.length) return;
+
+      const header = "round,startCount,sequence,correctFinalCount,userAnswer,correct,rtMs\n";
+      const rows = results
+        .map((r) => {
+          const seq = r.sequence.join(" ");
+          return [
+            r.round,
+            r.startCount,
+            `"${seq}"`,
+            r.correctFinalCount,
+            r.userAnswer,
+            r.correct ? 1 : 0,
+            r.rtMs,
+          ].join(",");
+        })
+        .join("\n");
+
+      const csvContent = header + rows;
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "people_in_house_results.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // ------------------------------
+    // EVENTS
+    // ------------------------------
+    startButton.addEventListener("click", startGame);
+    restartButton.addEventListener("click", startGame);
+    downloadButton.addEventListener("click", downloadCSV);
+
+    numberButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        if (!acceptingInput) return;
+
+        numberButtons.forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+
+        selectedAnswer = parseInt(btn.getAttribute("data-value"), 10);
+
+        setTimeout(() => handleAnswer(), 300);
+      });
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        if (acceptingInput && selectedAnswer !== null) {
+          e.preventDefault();
+          handleAnswer();
+        }
+      }
+
+      if (acceptingInput && e.key >= "0" && e.key <= "9") {
+        const value = parseInt(e.key, 10);
+        const btn = Array.from(numberButtons).find(b =>
+          parseInt(b.getAttribute("data-value"), 10) === value
+        );
+        if (btn) btn.click();
+      }
+    });
+  </script>
+</body>
+</html>
