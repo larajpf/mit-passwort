@@ -16,6 +16,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 12px 0;
     }
 
     .container {
@@ -80,18 +81,6 @@
       overflow: hidden;
     }
 
-    .scene-header,
-    .panel-header {
-      font-size: 0.8rem;
-      color: #9ca3af;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    /* --- Phone / Screen --- */
-
     .scene-inner {
       border-radius: 14px;
       padding: 10px 10px 14px;
@@ -104,7 +93,7 @@
     .phone {
       width: 100%;
       max-width: 420px;
-      height: 350px;
+      height: min(350px, 55vh);
       border-radius: 30px;
       background: #020617;
       padding: 10px 6px;
@@ -124,11 +113,10 @@
       align-items: center;
       justify-content: center;
       padding: 0;
-      position: relative; /* für Overlays */
-      overflow: hidden;   /* wichtig: Personen sauber rein/raus */
+      position: relative;
+      overflow: hidden;
     }
 
-    /* Feedback Overlay über dem Haus */
     .feedback-overlay {
       position: absolute;
       top: 50%;
@@ -144,7 +132,7 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease;
-      white-space: pre-line; /* damit \n angezeigt wird */
+      white-space: pre-line;
     }
 
     .feedback-overlay.ok {
@@ -153,47 +141,37 @@
       border: 3px solid #16a34a;
       box-shadow: 0 0 40px rgba(34, 197, 94, 0.6);
     }
-
     .feedback-overlay.err {
       color: #ffffff;
       background: rgba(239, 68, 68, 0.95);
       border: 3px solid #dc2626;
       box-shadow: 0 0 40px rgba(239, 68, 68, 0.6);
     }
-
     .feedback-overlay.neutral {
       color: #111827;
       background: rgba(229, 231, 235, 0.95);
       border: 3px solid #9ca3af;
       box-shadow: 0 0 40px rgba(148, 163, 184, 0.45);
     }
-
     .feedback-overlay.small {
       font-size: 1.25rem;
       padding: 18px 22px;
       min-width: 260px;
     }
-
     .feedback-overlay.show { opacity: 1; }
 
-    /* =========================
-       WERBE-OVERLAY (JPG + TIMER)
-       ========================= */
     .ad-overlay {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.88);
       z-index: 1000;
-
       display: flex;
       align-items: center;
       justify-content: center;
-
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.3s ease;
     }
-
     .ad-overlay.show {
       opacity: 1;
       pointer-events: all;
@@ -209,7 +187,6 @@
       border: 2px solid rgba(255, 255, 255, 0.25);
       background: rgba(255, 255, 255, 0.06);
     }
-
     .ad-image {
       width: 100%;
       height: auto;
@@ -219,25 +196,20 @@
       user-select: none;
     }
 
-    /* Countdown oben rechts */
     .ad-timer {
       position: absolute;
       top: 16px;
       right: 16px;
       z-index: 1001;
-
       background: rgba(255, 255, 255, 0.92);
       border: 2px solid rgba(15, 23, 42, 0.35);
       border-radius: 999px;
-
       min-width: 56px;
       height: 56px;
       padding: 0 12px;
-
       display: flex;
       align-items: center;
       justify-content: center;
-
       font-size: 1.6rem;
       font-weight: 800;
       color: #0f172a;
@@ -260,7 +232,6 @@
       flex: 0 0 clamp(60px, 20vw, 100px);
       height: 100%;
     }
-
     .lane::before {
       content: "";
       position: absolute;
@@ -279,13 +250,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 3; /* Haus über Personen */
+      z-index: 3;
     }
 
     .house-icon { width: 100%; height: 100%; display: block; }
     .house-icon * { fill: #020617; }
 
-    /* Personen (Animation per JS) */
     .person-group {
       position: absolute;
       top: 50%;
@@ -294,10 +264,10 @@
       gap: 2px;
       opacity: 1;
       filter: drop-shadow(0 3px 4px rgba(15, 23, 42, 0.45));
-      z-index: 2; /* unter dem Haus */
+      z-index: 2;
       will-change: transform, opacity;
       pointer-events: none;
-      transform: translate(-200px, -50%); /* Startwert (wird von JS überschrieben) */
+      transform: translate(-200px, -50%);
     }
 
     .person-icon { width: 50px; height: 100px; }
@@ -332,18 +302,7 @@
       box-shadow: 0 10px 18px rgba(79, 70, 229, 0.55);
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.1s ease;
       white-space: nowrap;
-    }
-
-    button:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 14px 26px rgba(79, 70, 229, 0.6);
-      filter: brightness(1.07);
-    }
-
-    button:active:not(:disabled) {
-      transform: translateY(0);
-      box-shadow: 0 8px 14px rgba(79, 70, 229, 0.7);
-      filter: brightness(0.97);
+      -webkit-tap-highlight-color: transparent;
     }
 
     button:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
@@ -356,7 +315,6 @@
 
     .hidden { display: none !important; }
 
-    /* Zahlen-Buttons */
     .number-buttons {
       display: flex;
       gap: 8px;
@@ -377,18 +335,8 @@
       cursor: pointer;
       transition: all 0.15s ease;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    }
-
-    .number-btn:hover {
-      transform: translateY(-2px);
-      border-color: rgba(129, 140, 248, 0.9);
-      background: rgba(79, 70, 229, 0.4);
-      box-shadow: 0 6px 12px rgba(79, 70, 229, 0.4);
-    }
-
-    .number-btn:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .number-btn.selected {
@@ -402,6 +350,37 @@
       .scene-card { padding: 10px 10px 12px; }
       .scene-inner { padding: 6px; }
       .scene-layout { padding: 0; gap: 6px; }
+
+      .house-icon-wrapper {
+        flex: 0 0 clamp(120px, 40vw, 180px);
+        height: clamp(120px, 40vw, 180px);
+      }
+
+      .number-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        width: 100%;
+      }
+
+      .number-btn {
+        min-width: 0;
+        width: 100%;
+        padding: 12px 0;
+        font-size: 1rem;
+        border-radius: 12px;
+      }
+
+      .feedback-overlay {
+        min-width: 240px;
+        padding: 18px 20px;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .number-buttons {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
   </style>
 </head>
@@ -424,7 +403,6 @@
       </ul>
     </div>
 
-    <!-- Werbe-Overlay (JPG) -->
     <div class="ad-overlay" id="ad-overlay" aria-hidden="true">
       <div class="ad-container">
         <div class="ad-timer" id="ad-timer">12</div>
@@ -438,11 +416,10 @@
         <div class="scene-inner">
           <div class="phone">
             <div class="phone-screen">
-              <!-- Feedback Overlay -->
               <div class="feedback-overlay" id="feedback"></div>
 
               <div class="scene-layout">
-                <div class="lane lane-left" id="lane-left"></div>
+                <div class="lane lane-left"></div>
 
                 <div class="house-icon-wrapper">
                   <svg viewBox="0 0 100 100" class="house-icon" aria-hidden="true">
@@ -455,13 +432,12 @@
                   </svg>
                 </div>
 
-                <div class="lane lane-right" id="lane-right"></div>
+                <div class="lane lane-right"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Controls -->
         <div class="controls controls-inline">
           <div id="pre-start-controls">
             <button id="start-button">▶ Start task</button>
@@ -501,22 +477,22 @@
   </div>
 
   <script>
-    // ------------------------------
-    // CONFIG
-    // ------------------------------
     const config = {
       totalRounds: 8,
       eventsPerRound: 8,
       minChange: -3,
       maxChange: 3,
-      showDurationMs: 1400,          // bleibt drin, wird für Personenbewegung nicht mehr verwendet
-      pauseBetweenEventsMs: 20,
+      pauseBetweenEventsMs: 500,
+      showDurationMs: 1400,
       initialMin: 0,
       initialMax: 0,
     };
 
     const AD_DURATION_SECONDS = 12;
-    const AD_POST_DELAY_MS = 3000; // NEU: 3 Sekunden Pause nach Werbung
+    const AD_POST_DELAY_MS = 3000;
+
+    // Geschwindigkeit: kleiner => langsamer
+    const PEOPLE_SPEED_PX_PER_SEC = 385;
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -529,9 +505,6 @@
       </svg>
     `;
 
-    // ------------------------------
-    // STATE
-    // ------------------------------
     let currentRound = 0;
     let sequence = [];
     let sequenceIndex = 0;
@@ -542,7 +515,6 @@
     let responseStartTime = 0;
     const results = [];
 
-    // DOM
     const startButton = document.getElementById("start-button");
     const restartButton = document.getElementById("restart-button");
     const downloadButton = document.getElementById("download-csv");
@@ -551,15 +523,11 @@
     const postGameControls = document.getElementById("post-game-controls");
     const numberButtons = document.querySelectorAll(".number-btn");
     const feedbackEl = document.getElementById("feedback");
-    const laneLeft = document.getElementById("lane-left");
-    const laneRight = document.getElementById("lane-right");
     const introEl = document.getElementById("intro");
 
-    // Animation anchors
     const phoneScreen = document.querySelector(".phone-screen");
     const houseWrap = document.querySelector(".house-icon-wrapper");
 
-    // Ad DOM
     const adOverlay = document.getElementById("ad-overlay");
     const adTimer = document.getElementById("ad-timer");
 
@@ -570,6 +538,10 @@
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
+    function clamp(x, a, b) {
+      return Math.max(a, Math.min(b, x));
+    }
+
     function resetFeedback() {
       feedbackEl.textContent = "";
       feedbackEl.className = "feedback-overlay";
@@ -578,100 +550,85 @@
     function showFeedback(text, type = "ok", small = false, ms = 0) {
       feedbackEl.textContent = text;
       feedbackEl.className = `feedback-overlay ${type} ${small ? "small" : ""} show`.trim();
-      if (ms > 0) {
-        setTimeout(() => feedbackEl.classList.remove("show"), ms);
-      }
+      if (ms > 0) setTimeout(() => feedbackEl.classList.remove("show"), ms);
     }
 
     function hideFeedback() {
       feedbackEl.classList.remove("show");
     }
 
-    function hideEvent() {
-      // no-op
-    }
+    function hideEvent() {}
 
-    // =========================
-    // PERSONEN-ANIMATION
-    // - IMMER links -> rechts
-    // - Rein: links -> ins Haus -> verschwinden
-    // - Raus: im Haus starten -> rechts raus -> aus dem Bild
-    // - 3er Gruppe: wird leicht skaliert + engerer Abstand, damit rechts niemand neben dem Haus sichtbar ist
-    // =========================
+    // === Animation-Regeln (wie du wolltest) ===
+    // Entrance: links -> ins Haus, nie rechts vom Haus sichtbar (auch bei 3 Personen)
+    // Exit: im Haus starten -> rechts aus dem Bild laufen (rechts vom Haus sichtbar)
     function animatePeople(delta) {
       const count = Math.abs(delta);
       const isEnter = delta > 0;
 
-      // NEU: 3er Gruppe kompakter (damit rechts niemand "neben dem Haus" sichtbar wird)
-      const scale = (count === 3) ? 0.82 : 1;
-      const gapPx = (count === 3) ? 0 : 2;
-
       const group = document.createElement("div");
       group.className = "person-group";
-      group.style.gap = `${gapPx}px`;
+      group.style.gap = (count === 3) ? "0px" : "2px";
 
-      for (let i = 0; i < count; i++) {
-        group.insertAdjacentHTML("beforeend", PERSON_ICON_HTML);
-      }
-
+      for (let i = 0; i < count; i++) group.insertAdjacentHTML("beforeend", PERSON_ICON_HTML);
       phoneScreen.appendChild(group);
 
-      // Erstmal skalieren, damit Messung die echte (skalierte) Breite berücksichtigt
-      group.style.transform = `translate(0px, -50%) scale(${scale})`;
+      // messen bei scale 1
+      group.style.transform = "translate(0px, -50%) scale(1)";
       group.style.opacity = "0";
 
-      // Messen, nachdem es im DOM ist
       const screenRect = phoneScreen.getBoundingClientRect();
       const houseRect = houseWrap.getBoundingClientRect();
-      const groupRect = group.getBoundingClientRect();
+      const groupRect1 = group.getBoundingClientRect();
 
-      // Hauszentrum relativ zur phoneScreen
-      const houseCenterX = (houseRect.left - screenRect.left) + (houseRect.width / 2);
+      const houseLeftRel = (houseRect.left - screenRect.left);
+      const houseRightRel = (houseRect.right - screenRect.left);
+      const houseCenterX = houseLeftRel + houseRect.width / 2;
 
-      // Zielposition "im Haus" (Gruppe so, dass sie im Hauszentrum liegt)
-      const xInHouse = houseCenterX - (groupRect.width / 2);
+      // Konservativer Innenraum, damit nix rechts/links rausguckt (wichtig für 3er Gruppe)
+      const HOUSE_INNER_RATIO = 0.72;
+      const houseInnerW = houseRect.width * HOUSE_INNER_RATIO;
+      const inset = (houseRect.width - houseInnerW) / 2;
 
-      // Start/Ende (immer links -> rechts)
+      const scale = Math.min(1, houseInnerW / groupRect1.width);
+      const scaledW = groupRect1.width * scale;
+
+      // Ziel im Haus so clampen, dass die Gruppe komplett innerhalb (houseLeft+inset .. houseRight-inset) bleibt
+      const minX = houseLeftRel + inset;
+      const maxX = houseRightRel - inset - scaledW;
+      const centeredX = houseCenterX - scaledW / 2;
+      const xInHouse = clamp(centeredX, minX, maxX);
+
       const margin = 70;
-      const fromX = isEnter ? (-groupRect.width - margin) : xInHouse;
-      const toX   = isEnter ? xInHouse : (screenRect.width + margin);
 
-      // konstante Geschwindigkeit
-      const speedPxPerSec = 450;
+      // Entrance: von links bis xInHouse (und dort ausblenden)
+      // Exit: von xInHouse bis rechts aus dem Screen
+      const fromX = isEnter ? (-scaledW - margin) : xInHouse;
+      const toX = isEnter ? xInHouse : (screenRect.width + margin);
+
       const distance = Math.abs(toX - fromX);
-      const duration = (distance / speedPxPerSec) * 1000;
+      let duration = (distance / PEOPLE_SPEED_PX_PER_SEC) * 1000;
+      duration = Math.max(duration, 900);
 
-      // Startzustand setzen
       group.style.transform = `translate(${fromX}px, -50%) scale(${scale})`;
-      group.style.opacity = isEnter ? "1" : "0";
+      group.style.opacity = "1";
 
-      // Keyframes:
-      // Rein: bleibt sichtbar bis kurz vor Ende, verschwindet dann im Haus
-      // Raus: startet unsichtbar im Haus, wird sehr schnell sichtbar, läuft raus
       const keyframes = isEnter
         ? [
             { transform: `translate(${fromX}px, -50%) scale(${scale})`, opacity: 1, offset: 0 },
-            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 0.85 },
+            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 0.86 },
             { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 0, offset: 1 }
           ]
         : [
-            { transform: `translate(${fromX}px, -50%) scale(${scale})`, opacity: 0, offset: 0 },
-            { transform: `translate(${fromX + 12}px, -50%) scale(${scale})`, opacity: 1, offset: 0.08 },
-            { transform: `translate(${toX}px, -50%) scale(${scale})`, opacity: 1, offset: 1 }
+            { transform: `translate(${fromX}px, -50%) scale(${scale})`, opacity: 1, offset: 0 },
+            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 1 }
           ];
 
-      const anim = group.animate(keyframes, {
-        duration,
-        easing: "linear",
-        fill: "forwards"
-      });
-
+      const anim = group.animate(keyframes, { duration, easing: "linear", fill: "forwards" });
       anim.onfinish = () => group.remove();
-
       return duration;
     }
 
-    // Feste Sequenzen
     function generateSequence() {
       startCount = carryCount;
       sequence = [];
@@ -698,7 +655,6 @@
         return;
       }
 
-      // Fallback random
       for (let i = 0; i < config.eventsPerRound; i++) {
         const possibleDeltas = [];
         for (let d = config.minChange; d <= config.maxChange; d++) {
@@ -708,21 +664,13 @@
           if (current + d > 18) continue;
           possibleDeltas.push(d);
         }
-        let delta;
-        if (possibleDeltas.length === 0) {
-          delta = 1;
-        } else {
-          delta = possibleDeltas[randInt(0, possibleDeltas.length - 1)];
-        }
+        let delta = possibleDeltas.length ? possibleDeltas[randInt(0, possibleDeltas.length - 1)] : 1;
         current += delta;
         sequence.push(delta);
       }
       internalCount = current;
     }
 
-    // =========================
-    // AD HELPERS (12s JPG + TIMER)
-    // =========================
     function hideAd() {
       if (adTimerInterval) {
         clearInterval(adTimerInterval);
@@ -733,8 +681,8 @@
 
     function showAdBeforeLastRound() {
       hideAd();
-
       adOverlay.classList.add("show");
+
       let timeLeft = AD_DURATION_SECONDS;
       adTimer.textContent = timeLeft;
 
@@ -744,15 +692,11 @@
 
         if (timeLeft <= 0) {
           hideAd();
-          // NEU: 3 Sekunden Pause nach Werbung, dann nächste Runde starten
           setTimeout(() => nextRound(), AD_POST_DELAY_MS);
         }
       }, 1000);
     }
 
-    // ------------------------------
-    // FLOW
-    // ------------------------------
     function startGame() {
       hideAd();
       results.length = 0;
@@ -787,7 +731,6 @@
       playSequence();
     }
 
-    // Wartet auf echte Animationsdauer, damit Aktionen nicht überlappen
     function playSequence() {
       if (sequenceIndex >= sequence.length) {
         answerControls.classList.remove("hidden");
@@ -845,7 +788,6 @@
         setTimeout(() => {
           hideFeedback();
 
-          // Wenn die nächste Runde die letzte ist → Werbung davor
           if (currentRound + 1 === config.totalRounds) {
             showAdBeforeLastRound();
           } else {
@@ -867,7 +809,6 @@
       const correctN = results.filter((r) => r.correct).length;
       const accuracy = total ? Math.round((correctN / total) * 100) : 0;
 
-      // NEU: Password unter Accuracy
       showFeedback(
         `Thanks for playing!\nAccuracy: ${accuracy}%\nPassword: Game`,
         "neutral",
@@ -883,20 +824,18 @@
       if (!results.length) return;
 
       const header = "round,startCount,sequence,correctFinalCount,userAnswer,correct,rtMs\n";
-      const rows = results
-        .map((r) => {
-          const seq = r.sequence.join(" ");
-          return [
-            r.round,
-            r.startCount,
-            `"${seq}"`,
-            r.correctFinalCount,
-            r.userAnswer,
-            r.correct ? 1 : 0,
-            r.rtMs,
-          ].join(",");
-        })
-        .join("\n");
+      const rows = results.map(r => {
+        const seq = r.sequence.join(" ");
+        return [
+          r.round,
+          r.startCount,
+          `"${seq}"`,
+          r.correctFinalCount,
+          r.userAnswer,
+          r.correct ? 1 : 0,
+          r.rtMs,
+        ].join(",");
+      }).join("\n");
 
       const csvContent = header + rows;
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -910,9 +849,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // ------------------------------
-    // EVENTS
-    // ------------------------------
     startButton.addEventListener("click", startGame);
     restartButton.addEventListener("click", startGame);
     downloadButton.addEventListener("click", downloadCSV);
@@ -925,7 +861,6 @@
         btn.classList.add("selected");
 
         selectedAnswer = parseInt(btn.getAttribute("data-value"), 10);
-
         setTimeout(() => handleAnswer(), 300);
       });
     });
