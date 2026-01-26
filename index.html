@@ -135,6 +135,7 @@
     }
     .feedback-overlay.show { opacity: 1; }
 
+    /* Ad overlay */
     .ad-overlay {
       position: fixed;
       inset: 0;
@@ -368,6 +369,7 @@
       </ul>
     </div>
 
+    <!-- Ad Overlay -->
     <div class="ad-overlay" id="ad-overlay" aria-hidden="true">
       <div class="ad-container">
         <div class="ad-timer" id="ad-timer">12</div>
@@ -402,6 +404,7 @@
           </div>
         </div>
 
+        <!-- Controls -->
         <div class="controls controls-inline">
           <div id="pre-start-controls">
             <button id="start-button">▶ Start task</button>
@@ -441,13 +444,16 @@
   </div>
 
   <script>
+    // ------------------------------
+    // CONFIG
+    // ------------------------------
     const config = {
       totalRounds: 8,
       eventsPerRound: 8,
       minChange: -3,
       maxChange: 3,
-      pauseBetweenEventsMs: 700,
-      showDurationMs: 1400,
+      pauseBetweenEventsMs: 700,   // 0.7s pause between groups
+      showDurationMs: 1400,        // kept for compatibility (not used for timing anymore)
       initialMin: 0,
       initialMax: 0,
     };
@@ -455,7 +461,11 @@
     const AD_DURATION_SECONDS = 12;
     const AD_POST_DELAY_MS = 3000;
 
+    // Movement speed: smaller => slower
     const PEOPLE_SPEED_PX_PER_SEC = 350;
+
+    // NEW: 1/2 people go 50px deeper into the house (clamped to house)
+    const ENTER_EXTRA_PX = 50;
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -468,6 +478,9 @@
       </svg>
     `;
 
+    // ------------------------------
+    // STATE
+    // ------------------------------
     let currentRound = 0;
     let sequence = [];
     let sequenceIndex = 0;
@@ -478,6 +491,7 @@
     let responseStartTime = 0;
     const results = [];
 
+    // DOM
     const startButton = document.getElementById("start-button");
     const restartButton = document.getElementById("restart-button");
     const downloadButton = document.getElementById("download-csv");
@@ -491,6 +505,7 @@
     const phoneScreen = document.querySelector(".phone-screen");
     const houseWrap = document.querySelector(".house-icon-wrapper");
 
+    // Ad DOM
     const adOverlay = document.getElementById("ad-overlay");
     const adTimer = document.getElementById("ad-timer");
 
@@ -500,6 +515,7 @@
     function randInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
+
     function clamp(x, a, b) {
       return Math.max(a, Math.min(b, x));
     }
@@ -508,19 +524,28 @@
       feedbackEl.textContent = "";
       feedbackEl.className = "feedback-overlay";
     }
+
     function showFeedback(text, type = "ok", small = false, ms = 0) {
       feedbackEl.textContent = text;
       feedbackEl.className = `feedback-overlay ${type} ${small ? "small" : ""} show`.trim();
-      if (ms > 0) setTimeout(() => feedbackEl.classList.remove("show"), ms);
+      if (ms > 0) {
+        setTimeout(() => feedbackEl.classList.remove("show"), ms);
+      }
     }
-    function hideFeedback() { feedbackEl.classList.remove("show"); }
-    function hideEvent() {}
+
+    function hideFeedback() {
+      feedbackEl.classList.remove("show");
+    }
+
+    function hideEvent() {
+      // no-op (kept for compatibility)
+    }
 
     // Entrance:
-    // - 1/2 Personen: bis in die Hausmitte (xInHouse) laufen => wirkt "im Haus"
-    // - 3 Personen: konservativ, damit NIEMALS rechts vom Haus sichtbar
+    // - 1/2 people: run deeper into house (+50px, clamped)
+    // - 3 people: conservative stop so NEVER visible right of house
     // Exit:
-    // - startet im Haus und läuft nach rechts aus dem Bildschirm
+    // - start at house and move right off-screen
     function animatePeople(delta) {
       const count = Math.abs(delta);
       const isEnter = delta > 0;
@@ -529,9 +554,12 @@
       group.className = "person-group";
       group.style.gap = (count === 3) ? "0px" : "2px";
 
-      for (let i = 0; i < count; i++) group.insertAdjacentHTML("beforeend", PERSON_ICON_HTML);
+      for (let i = 0; i < count; i++) {
+        group.insertAdjacentHTML("beforeend", PERSON_ICON_HTML);
+      }
       phoneScreen.appendChild(group);
 
+      // Make sure we can measure sizes
       group.style.transform = "translate(0px, -50%) scale(1)";
       group.style.opacity = "0";
 
@@ -552,23 +580,23 @@
 
       const minX = houseLeftRel + inset;
       const maxX = houseRightRel - inset - scaledW;
+
       const centeredX = houseCenterX - scaledW / 2;
       const xInHouse = clamp(centeredX, minX, maxX);
 
       const margin = 70;
 
-      // ✅ WICHTIGE ÄNDERUNG:
-      // - Für 1/2: Ziel = xInHouse (sichtbar "ins Haus hinein")
-      // - Für 3: Ziel = so, dass rechte Kante nur bis Hausmitte kommt (nie rechts sichtbar)
-      let disappearX;
+      let targetEnterX;
       if (count === 3) {
-        disappearX = (houseCenterX - scaledW) - 2;
+        // Stop so that right edge never passes house center (prevents any right-of-house visibility)
+        targetEnterX = (houseCenterX - scaledW) - 2;
       } else {
-        disappearX = xInHouse;
+        // Go 50px deeper into the house, but keep inside house bounds
+        targetEnterX = clamp(xInHouse + ENTER_EXTRA_PX, minX, maxX);
       }
 
       const fromX = isEnter ? (-scaledW - margin) : xInHouse;
-      const toX = isEnter ? disappearX : (screenRect.width + margin);
+      const toX = isEnter ? targetEnterX : (screenRect.width + margin);
 
       const distance = Math.abs(toX - fromX);
       let duration = (distance / PEOPLE_SPEED_PX_PER_SEC) * 1000;
@@ -595,6 +623,7 @@
       return duration;
     }
 
+    // Fixed sequences
     function generateSequence() {
       startCount = carryCount;
       sequence = [];
@@ -621,6 +650,7 @@
         return;
       }
 
+      // Fallback random (shouldn't be used with fixed rounds)
       for (let i = 0; i < config.eventsPerRound; i++) {
         const possibleDeltas = [];
         for (let d = config.minChange; d <= config.maxChange; d++) {
@@ -630,15 +660,21 @@
           if (current + d > 18) continue;
           possibleDeltas.push(d);
         }
-        let delta = possibleDeltas.length ? possibleDeltas[randInt(0, possibleDeltas.length - 1)] : 1;
+        const delta = possibleDeltas.length ? possibleDeltas[randInt(0, possibleDeltas.length - 1)] : 1;
         current += delta;
         sequence.push(delta);
       }
       internalCount = current;
     }
 
+    // ------------------------------
+    // AD HELPERS
+    // ------------------------------
     function hideAd() {
-      if (adTimerInterval) { clearInterval(adTimerInterval); adTimerInterval = null; }
+      if (adTimerInterval) {
+        clearInterval(adTimerInterval);
+        adTimerInterval = null;
+      }
       adOverlay.classList.remove("show");
     }
 
@@ -655,11 +691,14 @@
 
         if (timeLeft <= 0) {
           hideAd();
-          setTimeout(() => nextRound(), AD_POST_DELAY_MS);
+          setTimeout(() => nextRound(), AD_POST_DELAY_MS); // 3s pause after ad
         }
       }, 1000);
     }
 
+    // ------------------------------
+    // FLOW
+    // ------------------------------
     function startGame() {
       hideAd();
       results.length = 0;
@@ -678,12 +717,16 @@
 
     function nextRound() {
       currentRound++;
-      if (currentRound > config.totalRounds) { endGame(); return; }
+      if (currentRound > config.totalRounds) {
+        endGame();
+        return;
+      }
 
       generateSequence();
       sequenceIndex = 0;
 
       resetFeedback();
+
       answerControls.classList.add("hidden");
       acceptingInput = false;
 
@@ -746,8 +789,13 @@
       if (currentRound < config.totalRounds) {
         setTimeout(() => {
           hideFeedback();
-          if (currentRound + 1 === config.totalRounds) showAdBeforeLastRound();
-          else setTimeout(nextRound, 300);
+
+          // If next round is the last one -> show ad before it
+          if (currentRound + 1 === config.totalRounds) {
+            showAdBeforeLastRound();
+          } else {
+            setTimeout(nextRound, 300);
+          }
         }, 1200);
       } else {
         setTimeout(() => {
@@ -779,18 +827,20 @@
       if (!results.length) return;
 
       const header = "round,startCount,sequence,correctFinalCount,userAnswer,correct,rtMs\n";
-      const rows = results.map(r => {
-        const seq = r.sequence.join(" ");
-        return [
-          r.round,
-          r.startCount,
-          `"${seq}"`,
-          r.correctFinalCount,
-          r.userAnswer,
-          r.correct ? 1 : 0,
-          r.rtMs,
-        ].join(",");
-      }).join("\n");
+      const rows = results
+        .map((r) => {
+          const seq = r.sequence.join(" ");
+          return [
+            r.round,
+            r.startCount,
+            `"${seq}"`,
+            r.correctFinalCount,
+            r.userAnswer,
+            r.correct ? 1 : 0,
+            r.rtMs,
+          ].join(",");
+        })
+        .join("\n");
 
       const csvContent = header + rows;
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -804,6 +854,9 @@
       URL.revokeObjectURL(url);
     }
 
+    // ------------------------------
+    // EVENTS
+    // ------------------------------
     startButton.addEventListener("click", startGame);
     restartButton.addEventListener("click", startGame);
     downloadButton.addEventListener("click", downloadCSV);
@@ -816,6 +869,7 @@
         btn.classList.add("selected");
 
         selectedAnswer = parseInt(btn.getAttribute("data-value"), 10);
+
         setTimeout(() => handleAnswer(), 300);
       });
     });
