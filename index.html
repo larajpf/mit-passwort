@@ -369,7 +369,6 @@
       </ul>
     </div>
 
-    <!-- Ad Overlay -->
     <div class="ad-overlay" id="ad-overlay" aria-hidden="true">
       <div class="ad-container">
         <div class="ad-timer" id="ad-timer">12</div>
@@ -404,7 +403,6 @@
           </div>
         </div>
 
-        <!-- Controls -->
         <div class="controls controls-inline">
           <div id="pre-start-controls">
             <button id="start-button">▶ Start task</button>
@@ -462,7 +460,7 @@
 
     const ENTER_EXTRA_PX_1 = 5;
     const ENTER_EXTRA_PX_2 = 50;
-    const ENTER_EXTRA_PX_3 = 20; // your current setting
+    const ENTER_EXTRA_PX_3 = 20;
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -524,34 +522,43 @@
       const count = Math.abs(delta);
       const isEnter = delta > 0;
 
+      // screen + house first (needed for clip width)
+      const screenRect = phoneScreen.getBoundingClientRect();
+      const houseRect = houseWrap.getBoundingClientRect();
+      const houseRightRel = (houseRect.right - screenRect.left);
+      const houseLeftRel  = (houseRect.left  - screenRect.left);
+      const houseCenterX  = houseLeftRel + houseRect.width / 2;
+
+      // Optional clip wrapper ONLY for 3-person entering:
+      // It clips everything to the right of the house, but NEVER clips left side of the group.
+      let clipLayer = null;
+      let parentForGroup = phoneScreen;
+
+      if (isEnter && count === 3) {
+        clipLayer = document.createElement("div");
+        clipLayer.style.position = "absolute";
+        clipLayer.style.top = "0";
+        clipLayer.style.left = "0";
+        clipLayer.style.height = "100%";
+        clipLayer.style.width = `${Math.max(0, houseRightRel)}px`; // visible area ends at house right edge
+        clipLayer.style.overflow = "hidden";
+        clipLayer.style.pointerEvents = "none";
+        clipLayer.style.zIndex = "2";
+        phoneScreen.appendChild(clipLayer);
+        parentForGroup = clipLayer;
+      }
+
       const group = document.createElement("div");
       group.className = "person-group";
       group.style.gap = (count === 3) ? "0px" : "2px";
 
       for (let i = 0; i < count; i++) group.insertAdjacentHTML("beforeend", PERSON_ICON_HTML);
-      phoneScreen.appendChild(group);
+      parentForGroup.appendChild(group);
 
+      // measure group now that it's in DOM
       group.style.transform = "translate(0px, -50%) scale(1)";
       group.style.opacity = "0";
-
-      const screenRect = phoneScreen.getBoundingClientRect();
-      const houseRect = houseWrap.getBoundingClientRect();
       const groupRect1 = group.getBoundingClientRect();
-
-      const houseLeftRel = (houseRect.left - screenRect.left);
-      const houseRightRel = (houseRect.right - screenRect.left);
-      const houseCenterX = houseLeftRel + houseRect.width / 2;
-
-      // --- HARD CLIP for ENTER (prevents any part from being visible right of the house) ---
-      if (isEnter && count === 3) {
-        const clipRightPx = Math.max(0, screenRect.width - houseRightRel);
-        const clipValue = `inset(0px ${clipRightPx}px 0px 0px)`;
-        group.style.clipPath = clipValue;
-        group.style.webkitClipPath = clipValue; // Safari
-      } else {
-        group.style.clipPath = "";
-        group.style.webkitClipPath = "";
-      }
 
       const HOUSE_INNER_RATIO = 0.72;
       const houseInnerW = houseRect.width * HOUSE_INNER_RATIO;
@@ -601,7 +608,12 @@
           ];
 
       const anim = group.animate(keyframes, { duration, easing: "linear", fill: "forwards" });
-      anim.onfinish = () => group.remove();
+
+      anim.onfinish = () => {
+        group.remove();
+        if (clipLayer) clipLayer.remove();
+      };
+
       return duration;
     }
 
