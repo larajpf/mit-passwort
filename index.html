@@ -480,7 +480,7 @@
       eventsPerRound: 8,
       minChange: -3,
       maxChange: 3,
-      pauseBetweenEventsMs: 700, // 0,7 Sekunden
+      pauseBetweenEventsMs: 700, // 0.7 Sekunden Pause
       showDurationMs: 1400,
       initialMin: 0,
       initialMax: 0,
@@ -489,9 +489,12 @@
     const AD_DURATION_SECONDS = 12;
     const AD_POST_DELAY_MS = 3000;
 
-    // Personen noch etwas langsamer: kleiner => langsamer
-    // (vorher 385, jetzt 350)
+    // Geschwindigkeit: kleiner => langsamer
     const PEOPLE_SPEED_PX_PER_SEC = 350;
+
+    // NEU: Beim HINEINGEHEN verschwinden sie schon in/nahe der Bildschirmmitte
+    // 0.50 = exakt Mitte, kleiner = früher weg, größer = später weg
+    const DISAPPEAR_X_RATIO = 0.52;
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -558,6 +561,8 @@
 
     function hideEvent() {}
 
+    // Entrance: links -> bis "disappearX" (Mitte) -> ausblenden
+    // Exit: im Haus starten -> rechts aus dem Screen laufen
     function animatePeople(delta) {
       const count = Math.abs(delta);
       const isEnter = delta > 0;
@@ -594,8 +599,11 @@
 
       const margin = 70;
 
+      // NEU: Zielpunkt fürs Hereingehen = Bildschirmmitte (oder leicht daneben)
+      const disappearX = (screenRect.width * DISAPPEAR_X_RATIO) - (scaledW / 2);
+
       const fromX = isEnter ? (-scaledW - margin) : xInHouse;
-      const toX = isEnter ? xInHouse : (screenRect.width + margin);
+      const toX = isEnter ? disappearX : (screenRect.width + margin);
 
       const distance = Math.abs(toX - fromX);
       let duration = (distance / PEOPLE_SPEED_PX_PER_SEC) * 1000;
@@ -607,7 +615,7 @@
       const keyframes = isEnter
         ? [
             { transform: `translate(${fromX}px, -50%) scale(${scale})`, opacity: 1, offset: 0 },
-            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 0.86 },
+            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 0.80 },
             { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 0, offset: 1 }
           ]
         : [
