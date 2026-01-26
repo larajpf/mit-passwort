@@ -135,7 +135,6 @@
     }
     .feedback-overlay.show { opacity: 1; }
 
-    /* Ad overlay */
     .ad-overlay {
       position: fixed;
       inset: 0;
@@ -462,6 +461,10 @@
     const ENTER_EXTRA_PX_2 = 50;
     const ENTER_EXTRA_PX_3 = 20;
 
+    // Hauskörper im SVG: rect x=18 width=64 => rechte Kante bei 82/100
+    const HOUSE_BODY_RIGHT_RATIO = 0.82;
+    const HOUSE_BODY_CLIP_SAFETY_PX = 2;
+
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
         <circle cx="16" cy="10" r="7"></circle>
@@ -522,15 +525,17 @@
       const count = Math.abs(delta);
       const isEnter = delta > 0;
 
-      // screen + house first (needed for clip width)
       const screenRect = phoneScreen.getBoundingClientRect();
       const houseRect = houseWrap.getBoundingClientRect();
-      const houseRightRel = (houseRect.right - screenRect.left);
+
       const houseLeftRel  = (houseRect.left  - screenRect.left);
+      const houseRightRel = (houseRect.right - screenRect.left);
       const houseCenterX  = houseLeftRel + houseRect.width / 2;
 
-      // Optional clip wrapper ONLY for 3-person entering:
-      // It clips everything to the right of the house, but NEVER clips left side of the group.
+      // CLIP width at HOUSE BODY right edge (not full roof/SVG)
+      const houseBodyRightRel = houseLeftRel + (houseRect.width * HOUSE_BODY_RIGHT_RATIO);
+      const clipWidthPx = Math.max(0, houseBodyRightRel - HOUSE_BODY_CLIP_SAFETY_PX);
+
       let clipLayer = null;
       let parentForGroup = phoneScreen;
 
@@ -540,7 +545,7 @@
         clipLayer.style.top = "0";
         clipLayer.style.left = "0";
         clipLayer.style.height = "100%";
-        clipLayer.style.width = `${Math.max(0, houseRightRel)}px`; // visible area ends at house right edge
+        clipLayer.style.width = `${clipWidthPx}px`; // ✅ ends at house BODY right edge
         clipLayer.style.overflow = "hidden";
         clipLayer.style.pointerEvents = "none";
         clipLayer.style.zIndex = "2";
@@ -555,7 +560,6 @@
       for (let i = 0; i < count; i++) group.insertAdjacentHTML("beforeend", PERSON_ICON_HTML);
       parentForGroup.appendChild(group);
 
-      // measure group now that it's in DOM
       group.style.transform = "translate(0px, -50%) scale(1)";
       group.style.opacity = "0";
       const groupRect1 = group.getBoundingClientRect();
@@ -585,7 +589,7 @@
       }
 
       const fromX = isEnter ? (-scaledW - margin) : xInHouse;
-      const toX = isEnter ? targetEnterX : (screenRect.width + margin);
+      const toX   = isEnter ? targetEnterX : (screenRect.width + margin);
 
       const distance = Math.abs(toX - fromX);
       let duration = (distance / PEOPLE_SPEED_PX_PER_SEC) * 1000;
