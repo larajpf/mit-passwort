@@ -460,10 +460,13 @@
 
     const PEOPLE_SPEED_PX_PER_SEC = 350;
 
-    // Offsets for how far they go "into the house" when entering
-    const ENTER_EXTRA_PX_1 = 5;   // 1 person
-    const ENTER_EXTRA_PX_2 = 50;  // 2 people
-    const ENTER_EXTRA_PX_3 = 10;  // 3 people: +10px to the right (still clamped)
+    // how far they go "into the house" when entering
+    const ENTER_EXTRA_PX_1 = 5;
+    const ENTER_EXTRA_PX_2 = 50;
+    const ENTER_EXTRA_PX_3 = 20; // keep your +20 request
+
+    // extra safety padding so 3-person group never peeks out on the right side of the house
+    const ENTER_RIGHT_SAFETY_PX_3 = 16;
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -543,7 +546,9 @@
       const houseRightRel = (houseRect.right - screenRect.left);
       const houseCenterX = houseLeftRel + houseRect.width / 2;
 
-      const HOUSE_INNER_RATIO = 0.72;
+      // Make 3-person groups a bit smaller inside the house to prevent any "peek" on the right.
+      const HOUSE_INNER_RATIO = (count === 3 && isEnter) ? 0.66 : 0.72;
+
       const houseInnerW = houseRect.width * HOUSE_INNER_RATIO;
       const inset = (houseRect.width - houseInnerW) / 2;
 
@@ -551,7 +556,14 @@
       const scaledW = groupRect1.width * scale;
 
       const minX = houseLeftRel + inset;
-      const maxX = houseRightRel - inset - scaledW;
+
+      // Normal maxX (keeps group within inner area)
+      const maxXBase = houseRightRel - inset - scaledW;
+
+      // For 3-person entering: stricter maxX so the RIGHTMOST person never appears right of the house.
+      const maxX = (count === 3 && isEnter)
+        ? (maxXBase - ENTER_RIGHT_SAFETY_PX_3)
+        : maxXBase;
 
       const centeredX = houseCenterX - scaledW / 2;
       const xInHouse = clamp(centeredX, minX, maxX);
@@ -560,7 +572,6 @@
 
       let targetEnterX;
       if (count === 3) {
-        // base conservative stop + 10px (still clamped inside)
         const base = (houseCenterX - scaledW) - 2;
         targetEnterX = clamp(base + ENTER_EXTRA_PX_3, minX, maxX);
       } else {
@@ -612,14 +623,10 @@
         8: [3, 2, -1, -1, -3, 3, -1, -2, -1]
       };
 
-      if (fixedSequences[currentRound]) {
-        const fixed = fixedSequences[currentRound];
-        for (let i = 0; i < fixed.length; i++) {
-          sequence.push(fixed[i]);
-          current += fixed[i];
-        }
-        internalCount = current;
-        return;
+      const fixed = fixedSequences[currentRound];
+      for (let i = 0; i < fixed.length; i++) {
+        sequence.push(fixed[i]);
+        current += fixed[i];
       }
       internalCount = current;
     }
