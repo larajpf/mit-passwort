@@ -30,17 +30,8 @@
       color: #e5e7eb;
     }
 
-    h1 {
-      margin: 0 0 2px;
-      font-size: 1.25rem;
-      letter-spacing: 0.03em;
-    }
-
-    .subtitle {
-      margin-bottom: 8px;
-      font-size: 0.8rem;
-      color: #9ca3af;
-    }
+    h1 { margin: 0 0 2px; font-size: 1.25rem; letter-spacing: 0.03em; }
+    .subtitle { margin-bottom: 8px; font-size: 0.8rem; color: #9ca3af; }
 
     .top-row {
       display: flex;
@@ -51,28 +42,13 @@
       color: #9ca3af;
     }
 
-    .intro {
-      margin-bottom: 10px;
-      font-size: 0.8rem;
-    }
-
-    .intro ul {
-      margin: 4px 0 0 18px;
-      padding: 0;
-      font-size: 0.78rem;
-      color: #9ca3af;
-    }
-
+    .intro { margin-bottom: 10px; font-size: 0.8rem; }
+    .intro ul { margin: 4px 0 0 18px; padding: 0; font-size: 0.78rem; color: #9ca3af; }
     .intro ul li { margin-bottom: 2px; }
 
-    .game-area {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+    .game-area { display: flex; flex-direction: column; gap: 16px; }
 
-    .scene-card,
-    .panel-card {
+    .scene-card {
       background: radial-gradient(circle at top left, #020617, #020617 55%, #020617);
       border-radius: 16px;
       padding: 14px 16px 16px;
@@ -134,7 +110,6 @@
       transition: opacity 0.3s ease;
       white-space: pre-line;
     }
-
     .feedback-overlay.ok {
       color: #ffffff;
       background: rgba(34, 197, 94, 0.95);
@@ -172,10 +147,7 @@
       pointer-events: none;
       transition: opacity 0.3s ease;
     }
-    .ad-overlay.show {
-      opacity: 1;
-      pointer-events: all;
-    }
+    .ad-overlay.show { opacity: 1; pointer-events: all; }
 
     .ad-container {
       position: relative;
@@ -195,7 +167,6 @@
       display: block;
       user-select: none;
     }
-
     .ad-timer {
       position: absolute;
       top: 16px;
@@ -227,11 +198,7 @@
       gap: 10px;
     }
 
-    .lane {
-      position: relative;
-      flex: 0 0 clamp(60px, 20vw, 100px);
-      height: 100%;
-    }
+    .lane { position: relative; flex: 0 0 clamp(60px, 20vw, 100px); height: 100%; }
     .lane::before {
       content: "";
       position: absolute;
@@ -410,7 +377,6 @@
 
     <div class="game-area">
       <div class="scene-card">
-        <div class="scene-header"></div>
         <div class="scene-inner">
           <div class="phone">
             <div class="phone-screen">
@@ -480,7 +446,7 @@
       eventsPerRound: 8,
       minChange: -3,
       maxChange: 3,
-      pauseBetweenEventsMs: 700, // 0.7 Sekunden Pause
+      pauseBetweenEventsMs: 700,
       showDurationMs: 1400,
       initialMin: 0,
       initialMax: 0,
@@ -489,12 +455,8 @@
     const AD_DURATION_SECONDS = 12;
     const AD_POST_DELAY_MS = 3000;
 
-    // Geschwindigkeit: kleiner => langsamer
+    // kleiner => langsamer
     const PEOPLE_SPEED_PX_PER_SEC = 350;
-
-    // NEU: Beim HINEINGEHEN verschwinden sie schon in/nahe der Bildschirmmitte
-    // 0.50 = exakt Mitte, kleiner = früher weg, größer = später weg
-    const DISAPPEAR_X_RATIO = 0.52;
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -561,7 +523,7 @@
 
     function hideEvent() {}
 
-    // Entrance: links -> bis "disappearX" (Mitte) -> ausblenden
+    // Entrance: links -> bis "disappearX" -> ausblenden
     // Exit: im Haus starten -> rechts aus dem Screen laufen
     function animatePeople(delta) {
       const count = Math.abs(delta);
@@ -599,8 +561,10 @@
 
       const margin = 70;
 
-      // NEU: Zielpunkt fürs Hereingehen = Bildschirmmitte (oder leicht daneben)
-      const disappearX = (screenRect.width * DISAPPEAR_X_RATIO) - (scaledW / 2);
+      // ✅ NEU (WICHTIG):
+      // Beim Hineingehen verschwinden sie, sobald die RECHTE KANTE die Hausmitte erreicht.
+      // => Kein Teil kann rechts vom Haus sichtbar sein (auch bei 3 Personen).
+      const disappearX = (houseCenterX - scaledW) - 2;
 
       const fromX = isEnter ? (-scaledW - margin) : xInHouse;
       const toX = isEnter ? disappearX : (screenRect.width + margin);
@@ -615,7 +579,8 @@
       const keyframes = isEnter
         ? [
             { transform: `translate(${fromX}px, -50%) scale(${scale})`, opacity: 1, offset: 0 },
-            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 0.80 },
+            // ✅ früheres Fade, damit es "clean" wirkt
+            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 0.65 },
             { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 0, offset: 1 }
           ]
         : [
