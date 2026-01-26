@@ -135,7 +135,6 @@
     }
     .feedback-overlay.show { opacity: 1; }
 
-    /* Ad overlay */
     .ad-overlay {
       position: fixed;
       inset: 0;
@@ -369,7 +368,6 @@
       </ul>
     </div>
 
-    <!-- Ad Overlay -->
     <div class="ad-overlay" id="ad-overlay" aria-hidden="true">
       <div class="ad-container">
         <div class="ad-timer" id="ad-timer">12</div>
@@ -404,7 +402,6 @@
           </div>
         </div>
 
-        <!-- Controls -->
         <div class="controls controls-inline">
           <div id="pre-start-controls">
             <button id="start-button">▶ Start task</button>
@@ -452,8 +449,8 @@
       eventsPerRound: 8,
       minChange: -3,
       maxChange: 3,
-      pauseBetweenEventsMs: 700,   // 0.7s pause between groups
-      showDurationMs: 1400,        // kept for compatibility (not used for timing anymore)
+      pauseBetweenEventsMs: 700,
+      showDurationMs: 1400,
       initialMin: 0,
       initialMax: 0,
     };
@@ -461,11 +458,11 @@
     const AD_DURATION_SECONDS = 12;
     const AD_POST_DELAY_MS = 3000;
 
-    // Movement speed: smaller => slower
     const PEOPLE_SPEED_PX_PER_SEC = 350;
 
-    // NEW: 1/2 people go 50px deeper into the house (clamped to house)
-    const ENTER_EXTRA_PX = 50;
+    // NEW: separate offsets
+    const ENTER_EXTRA_PX_1 = 25; // 1 person
+    const ENTER_EXTRA_PX_2 = 50; // 2 people
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -537,15 +534,8 @@
       feedbackEl.classList.remove("show");
     }
 
-    function hideEvent() {
-      // no-op (kept for compatibility)
-    }
+    function hideEvent() {}
 
-    // Entrance:
-    // - 1/2 people: run deeper into house (+50px, clamped)
-    // - 3 people: conservative stop so NEVER visible right of house
-    // Exit:
-    // - start at house and move right off-screen
     function animatePeople(delta) {
       const count = Math.abs(delta);
       const isEnter = delta > 0;
@@ -559,7 +549,6 @@
       }
       phoneScreen.appendChild(group);
 
-      // Make sure we can measure sizes
       group.style.transform = "translate(0px, -50%) scale(1)";
       group.style.opacity = "0";
 
@@ -588,11 +577,14 @@
 
       let targetEnterX;
       if (count === 3) {
-        // Stop so that right edge never passes house center (prevents any right-of-house visibility)
         targetEnterX = (houseCenterX - scaledW) - 2;
       } else {
-        // Go 50px deeper into the house, but keep inside house bounds
-        targetEnterX = clamp(xInHouse + ENTER_EXTRA_PX, minX, maxX);
+        const extra =
+          (count === 1) ? ENTER_EXTRA_PX_1 :
+          (count === 2) ? ENTER_EXTRA_PX_2 :
+          0;
+
+        targetEnterX = clamp(xInHouse + extra, minX, maxX);
       }
 
       const fromX = isEnter ? (-scaledW - margin) : xInHouse;
@@ -623,7 +615,6 @@
       return duration;
     }
 
-    // Fixed sequences
     function generateSequence() {
       startCount = carryCount;
       sequence = [];
@@ -650,7 +641,6 @@
         return;
       }
 
-      // Fallback random (shouldn't be used with fixed rounds)
       for (let i = 0; i < config.eventsPerRound; i++) {
         const possibleDeltas = [];
         for (let d = config.minChange; d <= config.maxChange; d++) {
@@ -667,9 +657,6 @@
       internalCount = current;
     }
 
-    // ------------------------------
-    // AD HELPERS
-    // ------------------------------
     function hideAd() {
       if (adTimerInterval) {
         clearInterval(adTimerInterval);
@@ -691,14 +678,11 @@
 
         if (timeLeft <= 0) {
           hideAd();
-          setTimeout(() => nextRound(), AD_POST_DELAY_MS); // 3s pause after ad
+          setTimeout(() => nextRound(), AD_POST_DELAY_MS);
         }
       }, 1000);
     }
 
-    // ------------------------------
-    // FLOW
-    // ------------------------------
     function startGame() {
       hideAd();
       results.length = 0;
@@ -726,7 +710,6 @@
       sequenceIndex = 0;
 
       resetFeedback();
-
       answerControls.classList.add("hidden");
       acceptingInput = false;
 
@@ -790,7 +773,6 @@
         setTimeout(() => {
           hideFeedback();
 
-          // If next round is the last one -> show ad before it
           if (currentRound + 1 === config.totalRounds) {
             showAdBeforeLastRound();
           } else {
@@ -854,9 +836,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // ------------------------------
-    // EVENTS
-    // ------------------------------
     startButton.addEventListener("click", startGame);
     restartButton.addEventListener("click", startGame);
     downloadButton.addEventListener("click", downloadCSV);
@@ -869,7 +848,6 @@
         btn.classList.add("selected");
 
         selectedAnswer = parseInt(btn.getAttribute("data-value"), 10);
-
         setTimeout(() => handleAnswer(), 300);
       });
     });
