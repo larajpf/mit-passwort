@@ -135,6 +135,7 @@
     }
     .feedback-overlay.show { opacity: 1; }
 
+    /* Ad overlay */
     .ad-overlay {
       position: fixed;
       inset: 0;
@@ -368,6 +369,7 @@
       </ul>
     </div>
 
+    <!-- Ad Overlay -->
     <div class="ad-overlay" id="ad-overlay" aria-hidden="true">
       <div class="ad-container">
         <div class="ad-timer" id="ad-timer">12</div>
@@ -402,6 +404,7 @@
           </div>
         </div>
 
+        <!-- Controls -->
         <div class="controls controls-inline">
           <div id="pre-start-controls">
             <button id="start-button">▶ Start task</button>
@@ -449,8 +452,8 @@
       eventsPerRound: 8,
       minChange: -3,
       maxChange: 3,
-      pauseBetweenEventsMs: 700,
-      showDurationMs: 1400,
+      pauseBetweenEventsMs: 700, // 0.7s pause between groups
+      showDurationMs: 1400,      // kept for compatibility (not used for timing anymore)
       initialMin: 0,
       initialMax: 0,
     };
@@ -458,11 +461,13 @@
     const AD_DURATION_SECONDS = 12;
     const AD_POST_DELAY_MS = 3000;
 
+    // Movement speed: smaller => slower
     const PEOPLE_SPEED_PX_PER_SEC = 350;
 
-    // NEW: separate offsets
-    const ENTER_EXTRA_PX_1 = 25; // 1 person
-    const ENTER_EXTRA_PX_2 = 50; // 2 people
+    // Offsets for how far they go "into the house" when entering
+    const ENTER_EXTRA_PX_1 = 5;    // 1 person (was 25, minus 20 => 5)
+    const ENTER_EXTRA_PX_2 = 50;   // 2 people
+    const ENTER_EXTRA_PX_3 = 20;   // 3 people: 20px further right than before
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -549,6 +554,7 @@
       }
       phoneScreen.appendChild(group);
 
+      // measure
       group.style.transform = "translate(0px, -50%) scale(1)";
       group.style.opacity = "0";
 
@@ -577,7 +583,10 @@
 
       let targetEnterX;
       if (count === 3) {
-        targetEnterX = (houseCenterX - scaledW) - 2;
+        // base target that prevents right side from reaching too far
+        const base = (houseCenterX - scaledW) - 2;
+        // move 20px further right, but still clamp inside the house interior
+        targetEnterX = clamp(base + ENTER_EXTRA_PX_3, minX, maxX);
       } else {
         const extra =
           (count === 1) ? ENTER_EXTRA_PX_1 :
@@ -615,6 +624,7 @@
       return duration;
     }
 
+    // Fixed sequences
     function generateSequence() {
       startCount = carryCount;
       sequence = [];
@@ -641,6 +651,7 @@
         return;
       }
 
+      // fallback random (normally not used)
       for (let i = 0; i < config.eventsPerRound; i++) {
         const possibleDeltas = [];
         for (let d = config.minChange; d <= config.maxChange; d++) {
@@ -657,6 +668,9 @@
       internalCount = current;
     }
 
+    // ------------------------------
+    // AD HELPERS
+    // ------------------------------
     function hideAd() {
       if (adTimerInterval) {
         clearInterval(adTimerInterval);
@@ -678,11 +692,14 @@
 
         if (timeLeft <= 0) {
           hideAd();
-          setTimeout(() => nextRound(), AD_POST_DELAY_MS);
+          setTimeout(() => nextRound(), AD_POST_DELAY_MS); // 3s pause after ad
         }
       }, 1000);
     }
 
+    // ------------------------------
+    // FLOW
+    // ------------------------------
     function startGame() {
       hideAd();
       results.length = 0;
@@ -772,7 +789,6 @@
       if (currentRound < config.totalRounds) {
         setTimeout(() => {
           hideFeedback();
-
           if (currentRound + 1 === config.totalRounds) {
             showAdBeforeLastRound();
           } else {
@@ -836,6 +852,9 @@
       URL.revokeObjectURL(url);
     }
 
+    // ------------------------------
+    // EVENTS
+    // ------------------------------
     startButton.addEventListener("click", startGame);
     restartButton.addEventListener("click", startGame);
     downloadButton.addEventListener("click", downloadCSV);
