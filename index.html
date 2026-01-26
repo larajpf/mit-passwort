@@ -461,9 +461,12 @@
     const ENTER_EXTRA_PX_2 = 50;
     const ENTER_EXTRA_PX_3 = 20;
 
-    // Hauskörper im SVG: rect x=18 width=64 => rechte Kante bei 82/100
+    // House body in SVG: rect x=18 width=64 => right edge at 82/100
     const HOUSE_BODY_RIGHT_RATIO = 0.82;
     const HOUSE_BODY_CLIP_SAFETY_PX = 2;
+
+    // ✅ 1- and 2-person groups smaller (≈ 20% smaller)
+    const SMALLER_1_2_SCALE = 0.8;
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -532,7 +535,6 @@
       const houseRightRel = (houseRect.right - screenRect.left);
       const houseCenterX  = houseLeftRel + houseRect.width / 2;
 
-      // CLIP width at HOUSE BODY right edge (not full roof/SVG)
       const houseBodyRightRel = houseLeftRel + (houseRect.width * HOUSE_BODY_RIGHT_RATIO);
       const clipWidthPx = Math.max(0, houseBodyRightRel - HOUSE_BODY_CLIP_SAFETY_PX);
 
@@ -545,7 +547,7 @@
         clipLayer.style.top = "0";
         clipLayer.style.left = "0";
         clipLayer.style.height = "100%";
-        clipLayer.style.width = `${clipWidthPx}px`; // ✅ ends at house BODY right edge
+        clipLayer.style.width = `${clipWidthPx}px`;
         clipLayer.style.overflow = "hidden";
         clipLayer.style.pointerEvents = "none";
         clipLayer.style.zIndex = "2";
@@ -568,7 +570,14 @@
       const houseInnerW = houseRect.width * HOUSE_INNER_RATIO;
       const inset = (houseRect.width - houseInnerW) / 2;
 
-      const scale = Math.min(1, houseInnerW / groupRect1.width);
+      // base scale to fit house inner width
+      let scale = Math.min(1, houseInnerW / groupRect1.width);
+
+      // ✅ make 1- and 2-person groups smaller
+      if (count === 1 || count === 2) {
+        scale *= SMALLER_1_2_SCALE;
+      }
+
       const scaledW = groupRect1.width * scale;
 
       const minX = houseLeftRel + inset;
