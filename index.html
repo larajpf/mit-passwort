@@ -460,13 +460,9 @@
 
     const PEOPLE_SPEED_PX_PER_SEC = 350;
 
-    // how far they go "into the house" when entering
     const ENTER_EXTRA_PX_1 = 5;
     const ENTER_EXTRA_PX_2 = 50;
-    const ENTER_EXTRA_PX_3 = 20; // keep your +20 request
-
-    // extra safety padding so 3-person group never peeks out on the right side of the house
-    const ENTER_RIGHT_SAFETY_PX_3 = 16;
+    const ENTER_EXTRA_PX_3 = 20; // your current setting
 
     const PERSON_ICON_HTML = `
       <svg viewBox="0 0 32 64" class="person-icon" aria-hidden="true">
@@ -546,9 +542,18 @@
       const houseRightRel = (houseRect.right - screenRect.left);
       const houseCenterX = houseLeftRel + houseRect.width / 2;
 
-      // Make 3-person groups a bit smaller inside the house to prevent any "peek" on the right.
-      const HOUSE_INNER_RATIO = (count === 3 && isEnter) ? 0.66 : 0.72;
+      // --- HARD CLIP for ENTER (prevents any part from being visible right of the house) ---
+      if (isEnter && count === 3) {
+        const clipRightPx = Math.max(0, screenRect.width - houseRightRel);
+        const clipValue = `inset(0px ${clipRightPx}px 0px 0px)`;
+        group.style.clipPath = clipValue;
+        group.style.webkitClipPath = clipValue; // Safari
+      } else {
+        group.style.clipPath = "";
+        group.style.webkitClipPath = "";
+      }
 
+      const HOUSE_INNER_RATIO = 0.72;
       const houseInnerW = houseRect.width * HOUSE_INNER_RATIO;
       const inset = (houseRect.width - houseInnerW) / 2;
 
@@ -556,14 +561,7 @@
       const scaledW = groupRect1.width * scale;
 
       const minX = houseLeftRel + inset;
-
-      // Normal maxX (keeps group within inner area)
-      const maxXBase = houseRightRel - inset - scaledW;
-
-      // For 3-person entering: stricter maxX so the RIGHTMOST person never appears right of the house.
-      const maxX = (count === 3 && isEnter)
-        ? (maxXBase - ENTER_RIGHT_SAFETY_PX_3)
-        : maxXBase;
+      const maxX = houseRightRel - inset - scaledW;
 
       const centeredX = houseCenterX - scaledW / 2;
       const xInHouse = clamp(centeredX, minX, maxX);
