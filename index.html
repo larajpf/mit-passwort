@@ -455,7 +455,6 @@
     const AD_DURATION_SECONDS = 12;
     const AD_POST_DELAY_MS = 3000;
 
-    // kleiner => langsamer
     const PEOPLE_SPEED_PX_PER_SEC = 350;
 
     const PERSON_ICON_HTML = `
@@ -501,7 +500,6 @@
     function randInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
     }
-
     function clamp(x, a, b) {
       return Math.max(a, Math.min(b, x));
     }
@@ -510,21 +508,19 @@
       feedbackEl.textContent = "";
       feedbackEl.className = "feedback-overlay";
     }
-
     function showFeedback(text, type = "ok", small = false, ms = 0) {
       feedbackEl.textContent = text;
       feedbackEl.className = `feedback-overlay ${type} ${small ? "small" : ""} show`.trim();
       if (ms > 0) setTimeout(() => feedbackEl.classList.remove("show"), ms);
     }
-
-    function hideFeedback() {
-      feedbackEl.classList.remove("show");
-    }
-
+    function hideFeedback() { feedbackEl.classList.remove("show"); }
     function hideEvent() {}
 
-    // Entrance: links -> bis "disappearX" -> ausblenden
-    // Exit: im Haus starten -> rechts aus dem Screen laufen
+    // Entrance:
+    // - 1/2 Personen: bis in die Hausmitte (xInHouse) laufen => wirkt "im Haus"
+    // - 3 Personen: konservativ, damit NIEMALS rechts vom Haus sichtbar
+    // Exit:
+    // - startet im Haus und läuft nach rechts aus dem Bildschirm
     function animatePeople(delta) {
       const count = Math.abs(delta);
       const isEnter = delta > 0;
@@ -561,10 +557,15 @@
 
       const margin = 70;
 
-      // ✅ NEU (WICHTIG):
-      // Beim Hineingehen verschwinden sie, sobald die RECHTE KANTE die Hausmitte erreicht.
-      // => Kein Teil kann rechts vom Haus sichtbar sein (auch bei 3 Personen).
-      const disappearX = (houseCenterX - scaledW) - 2;
+      // ✅ WICHTIGE ÄNDERUNG:
+      // - Für 1/2: Ziel = xInHouse (sichtbar "ins Haus hinein")
+      // - Für 3: Ziel = so, dass rechte Kante nur bis Hausmitte kommt (nie rechts sichtbar)
+      let disappearX;
+      if (count === 3) {
+        disappearX = (houseCenterX - scaledW) - 2;
+      } else {
+        disappearX = xInHouse;
+      }
 
       const fromX = isEnter ? (-scaledW - margin) : xInHouse;
       const toX = isEnter ? disappearX : (screenRect.width + margin);
@@ -576,11 +577,12 @@
       group.style.transform = `translate(${fromX}px, -50%) scale(${scale})`;
       group.style.opacity = "1";
 
+      const entryHoldOffset = (count === 3) ? 0.65 : 0.80;
+
       const keyframes = isEnter
         ? [
             { transform: `translate(${fromX}px, -50%) scale(${scale})`, opacity: 1, offset: 0 },
-            // ✅ früheres Fade, damit es "clean" wirkt
-            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: 0.65 },
+            { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 1, offset: entryHoldOffset },
             { transform: `translate(${toX}px, -50%) scale(${scale})`,   opacity: 0, offset: 1 }
           ]
         : [
@@ -636,10 +638,7 @@
     }
 
     function hideAd() {
-      if (adTimerInterval) {
-        clearInterval(adTimerInterval);
-        adTimerInterval = null;
-      }
+      if (adTimerInterval) { clearInterval(adTimerInterval); adTimerInterval = null; }
       adOverlay.classList.remove("show");
     }
 
@@ -679,16 +678,12 @@
 
     function nextRound() {
       currentRound++;
-      if (currentRound > config.totalRounds) {
-        endGame();
-        return;
-      }
+      if (currentRound > config.totalRounds) { endGame(); return; }
 
       generateSequence();
       sequenceIndex = 0;
 
       resetFeedback();
-
       answerControls.classList.add("hidden");
       acceptingInput = false;
 
@@ -751,12 +746,8 @@
       if (currentRound < config.totalRounds) {
         setTimeout(() => {
           hideFeedback();
-
-          if (currentRound + 1 === config.totalRounds) {
-            showAdBeforeLastRound();
-          } else {
-            setTimeout(nextRound, 300);
-          }
+          if (currentRound + 1 === config.totalRounds) showAdBeforeLastRound();
+          else setTimeout(nextRound, 300);
         }, 1200);
       } else {
         setTimeout(() => {
