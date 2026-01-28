@@ -135,6 +135,9 @@
     }
     .feedback-overlay.show { opacity: 1; }
 
+    /* =========================
+       WERBE-OVERLAY (JPG + TIMER)
+       ========================= */
     .ad-overlay {
       position: fixed;
       inset: 0;
@@ -159,6 +162,7 @@
       border: 2px solid rgba(255, 255, 255, 0.25);
       background: rgba(255, 255, 255, 0.06);
     }
+
     .ad-image {
       width: 100%;
       height: auto;
@@ -167,6 +171,7 @@
       display: block;
       user-select: none;
     }
+
     .ad-timer {
       position: absolute;
       top: 16px;
@@ -304,6 +309,13 @@
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
+
+      /* ✅ Zahl exakt mittig */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      text-align: center;
     }
 
     .number-btn.selected {
@@ -461,14 +473,11 @@
     const ENTER_EXTRA_PX_2 = 50;
     const ENTER_EXTRA_PX_3 = 20;
 
-    // ✅ NEW: 2-person group stops slightly earlier (left)
     const ENTER_NUDGE_LEFT_2 = 10;
 
-    // House body in SVG: rect x=18 width=64 => right edge at 82/100
     const HOUSE_BODY_RIGHT_RATIO = 0.82;
     const HOUSE_BODY_CLIP_SAFETY_PX = 2;
 
-    // 1- and 2-person groups smaller
     const SMALLER_1_2_SCALE = 0.8;
 
     const PERSON_ICON_HTML = `
@@ -527,6 +536,32 @@
     function hideFeedback() { feedbackEl.classList.remove("show"); }
     function hideEvent() {}
 
+    function hideAd() {
+      if (adTimerInterval) {
+        clearInterval(adTimerInterval);
+        adTimerInterval = null;
+      }
+      adOverlay.classList.remove("show");
+    }
+
+    function showAdBeforeLastRound() {
+      hideAd();
+      adOverlay.classList.add("show");
+
+      let timeLeft = AD_DURATION_SECONDS;
+      adTimer.textContent = timeLeft;
+
+      adTimerInterval = setInterval(() => {
+        timeLeft--;
+        adTimer.textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+          hideAd();
+          setTimeout(() => nextRound(), AD_POST_DELAY_MS);
+        }
+      }, 1000);
+    }
+
     function animatePeople(delta) {
       const count = Math.abs(delta);
       const isEnter = delta > 0;
@@ -576,10 +611,7 @@
       const inset = (houseRect.width - houseInnerW) / 2;
 
       let scale = Math.min(1, houseInnerW / groupRect1.width);
-
-      if (count === 1 || count === 2) {
-        scale *= SMALLER_1_2_SCALE;
-      }
+      if (count === 1 || count === 2) scale *= SMALLER_1_2_SCALE;
 
       const scaledW = groupRect1.width * scale;
 
@@ -599,7 +631,6 @@
         const extra = (count === 1) ? ENTER_EXTRA_PX_1 : (count === 2) ? ENTER_EXTRA_PX_2 : 0;
         targetEnterX = clamp(xInHouse + extra, minX, maxX);
 
-        // ✅ NEW: nudge 2-person group end a bit left (only for entering)
         if (isEnter && count === 2) {
           targetEnterX = clamp(targetEnterX - ENTER_NUDGE_LEFT_2, minX, maxX);
         }
@@ -660,32 +691,6 @@
         current += fixed[i];
       }
       internalCount = current;
-    }
-
-    function hideAd() {
-      if (adTimerInterval) {
-        clearInterval(adTimerInterval);
-        adTimerInterval = null;
-      }
-      adOverlay.classList.remove("show");
-    }
-
-    function showAdBeforeLastRound() {
-      hideAd();
-      adOverlay.classList.add("show");
-
-      let timeLeft = AD_DURATION_SECONDS;
-      adTimer.textContent = timeLeft;
-
-      adTimerInterval = setInterval(() => {
-        timeLeft--;
-        adTimer.textContent = timeLeft;
-
-        if (timeLeft <= 0) {
-          hideAd();
-          setTimeout(() => nextRound(), AD_POST_DELAY_MS);
-        }
-      }, 1000);
     }
 
     function startGame() {
