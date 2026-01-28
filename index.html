@@ -465,7 +465,7 @@
     const HOUSE_BODY_RIGHT_RATIO = 0.82;
     const HOUSE_BODY_CLIP_SAFETY_PX = 2;
 
-    // ✅ 1- and 2-person groups smaller (≈ 20% smaller)
+    // 1- and 2-person groups smaller (≈ 20% smaller)
     const SMALLER_1_2_SCALE = 0.8;
 
     const PERSON_ICON_HTML = `
@@ -538,16 +538,19 @@
       const houseBodyRightRel = houseLeftRel + (houseRect.width * HOUSE_BODY_RIGHT_RATIO);
       const clipWidthPx = Math.max(0, houseBodyRightRel - HOUSE_BODY_CLIP_SAFETY_PX);
 
+      // ✅ clip for ENTER on 2-person and 3-person groups
+      const shouldClipEnter = isEnter && (count === 2 || count === 3);
+
       let clipLayer = null;
       let parentForGroup = phoneScreen;
 
-      if (isEnter && count === 3) {
+      if (shouldClipEnter) {
         clipLayer = document.createElement("div");
         clipLayer.style.position = "absolute";
         clipLayer.style.top = "0";
         clipLayer.style.left = "0";
         clipLayer.style.height = "100%";
-        clipLayer.style.width = `${clipWidthPx}px`;
+        clipLayer.style.width = `${clipWidthPx}px`; // ends at house BODY right edge
         clipLayer.style.overflow = "hidden";
         clipLayer.style.pointerEvents = "none";
         clipLayer.style.zIndex = "2";
@@ -570,10 +573,9 @@
       const houseInnerW = houseRect.width * HOUSE_INNER_RATIO;
       const inset = (houseRect.width - houseInnerW) / 2;
 
-      // base scale to fit house inner width
       let scale = Math.min(1, houseInnerW / groupRect1.width);
 
-      // ✅ make 1- and 2-person groups smaller
+      // smaller 1- and 2-person groups
       if (count === 1 || count === 2) {
         scale *= SMALLER_1_2_SCALE;
       }
