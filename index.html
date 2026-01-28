@@ -461,11 +461,14 @@
     const ENTER_EXTRA_PX_2 = 50;
     const ENTER_EXTRA_PX_3 = 20;
 
+    // ✅ NEW: 2-person group stops slightly earlier (left)
+    const ENTER_NUDGE_LEFT_2 = 10;
+
     // House body in SVG: rect x=18 width=64 => right edge at 82/100
     const HOUSE_BODY_RIGHT_RATIO = 0.82;
     const HOUSE_BODY_CLIP_SAFETY_PX = 2;
 
-    // 1- and 2-person groups smaller (≈ 20% smaller)
+    // 1- and 2-person groups smaller
     const SMALLER_1_2_SCALE = 0.8;
 
     const PERSON_ICON_HTML = `
@@ -538,7 +541,6 @@
       const houseBodyRightRel = houseLeftRel + (houseRect.width * HOUSE_BODY_RIGHT_RATIO);
       const clipWidthPx = Math.max(0, houseBodyRightRel - HOUSE_BODY_CLIP_SAFETY_PX);
 
-      // ✅ clip for ENTER on 2-person and 3-person groups
       const shouldClipEnter = isEnter && (count === 2 || count === 3);
 
       let clipLayer = null;
@@ -550,7 +552,7 @@
         clipLayer.style.top = "0";
         clipLayer.style.left = "0";
         clipLayer.style.height = "100%";
-        clipLayer.style.width = `${clipWidthPx}px`; // ends at house BODY right edge
+        clipLayer.style.width = `${clipWidthPx}px`;
         clipLayer.style.overflow = "hidden";
         clipLayer.style.pointerEvents = "none";
         clipLayer.style.zIndex = "2";
@@ -575,7 +577,6 @@
 
       let scale = Math.min(1, houseInnerW / groupRect1.width);
 
-      // smaller 1- and 2-person groups
       if (count === 1 || count === 2) {
         scale *= SMALLER_1_2_SCALE;
       }
@@ -597,6 +598,11 @@
       } else {
         const extra = (count === 1) ? ENTER_EXTRA_PX_1 : (count === 2) ? ENTER_EXTRA_PX_2 : 0;
         targetEnterX = clamp(xInHouse + extra, minX, maxX);
+
+        // ✅ NEW: nudge 2-person group end a bit left (only for entering)
+        if (isEnter && count === 2) {
+          targetEnterX = clamp(targetEnterX - ENTER_NUDGE_LEFT_2, minX, maxX);
+        }
       }
 
       const fromX = isEnter ? (-scaledW - margin) : xInHouse;
