@@ -16,7 +16,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 10px 0; /* etwas weniger außen */
+      padding: 10px 0;
     }
 
     .container {
@@ -72,10 +72,7 @@
       height: min(350px, 55vh);
       border-radius: 30px;
       background: #020617;
-
-      /* ✅ vorher: padding: 10px 6px;  -> weniger seitlicher Rand */
       padding: 10px 2px;
-
       box-shadow: 0 20px 34px rgba(0, 0, 0, 0.9);
       display: flex;
       align-items: center;
@@ -94,6 +91,33 @@
       padding: 0;
       position: relative;
       overflow: hidden;
+    }
+
+    /* ✅ Round overlay (Option D) */
+    .round-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 90;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #0f172a;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(15, 23, 42, 0.18);
+      border-radius: 999px;
+      padding: 6px 10px;
+      opacity: 0;
+      transform: translateY(-4px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      pointer-events: none;
+      user-select: none;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.12);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .round-overlay.show {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     .feedback-overlay {
@@ -197,10 +221,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-
-      /* ✅ vorher: padding: 0px 8px;  -> fast randnah */
       padding: 0px 2px;
-
       gap: 10px;
     }
 
@@ -325,13 +346,9 @@
     }
 
     @media (max-width: 480px) {
-      /* ✅ außen noch randnäher */
       .container { padding: 14px 8px 16px; }
-
       .scene-card { padding: 10px 8px 12px; }
       .scene-inner { padding: 6px; }
-
-      /* ✅ hier auch fast randnah */
       .scene-layout { padding: 0 1px; gap: 6px; }
 
       .house-icon-wrapper {
@@ -354,13 +371,11 @@
         border-radius: 12px;
       }
 
-      .feedback-overlay {
-        min-width: 240px;
-        padding: 18px 20px;
-      }
-
-      /* ✅ phone seitlich noch enger */
+      .feedback-overlay { min-width: 240px; padding: 18px 20px; }
       .phone { padding: 10px 1px; }
+
+      /* Round overlay auf Mobile etwas kleiner */
+      .round-overlay { top: 8px; left: 8px; font-size: 0.74rem; padding: 5px 9px; }
     }
 
     @media (max-width: 360px) {
@@ -399,6 +414,9 @@
         <div class="scene-inner">
           <div class="phone">
             <div class="phone-screen">
+              <!-- ✅ Round Overlay -->
+              <div class="round-overlay" id="round-overlay"></div>
+
               <div class="feedback-overlay" id="feedback"></div>
 
               <div class="scene-layout">
@@ -465,7 +483,7 @@
       eventsPerRound: 8,
       minChange: -3,
       maxChange: 3,
-      pauseBetweenEventsMs: 700,
+      pauseBetweenEventsMs: 200,
       showDurationMs: 1400,
       initialMin: 0,
       initialMax: 0,
@@ -474,7 +492,11 @@
     const AD_DURATION_SECONDS = 12;
     const AD_POST_DELAY_MS = 3000;
 
-    const PEOPLE_SPEED_PX_PER_SEC = 350;
+    // ✅ Round overlay duration (Option D)
+    const ROUND_OVERLAY_MS = 900;
+
+    // ✅ minimal schneller
+    const PEOPLE_SPEED_PX_PER_SEC = 385;
 
     const ENTER_EXTRA_PX_1 = 5;
     const ENTER_EXTRA_PX_2 = 50;
@@ -521,11 +543,14 @@
     const phoneScreen = document.querySelector(".phone-screen");
     const houseWrap = document.querySelector(".house-icon-wrapper");
 
+    const roundOverlayEl = document.getElementById("round-overlay");
+
     const adOverlay = document.getElementById("ad-overlay");
     const adTimer = document.getElementById("ad-timer");
 
     let selectedAnswer = null;
     let adTimerInterval = null;
+    let roundOverlayTimeout = null;
 
     function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
 
@@ -542,6 +567,25 @@
 
     function hideFeedback() { feedbackEl.classList.remove("show"); }
     function hideEvent() {}
+
+    // ✅ Round overlay helpers
+    function hideRoundOverlay() {
+      if (roundOverlayTimeout) {
+        clearTimeout(roundOverlayTimeout);
+        roundOverlayTimeout = null;
+      }
+      roundOverlayEl.classList.remove("show");
+    }
+
+    function showRoundOverlay(text, ms = ROUND_OVERLAY_MS) {
+      hideRoundOverlay();
+      roundOverlayEl.textContent = text;
+      roundOverlayEl.classList.add("show");
+      roundOverlayTimeout = setTimeout(() => {
+        roundOverlayEl.classList.remove("show");
+        roundOverlayTimeout = null;
+      }, ms);
+    }
 
     function hideAd() {
       if (adTimerInterval) {
@@ -702,6 +746,7 @@
 
     function startGame() {
       hideAd();
+      hideRoundOverlay();
       results.length = 0;
       currentRound = 0;
       carryCount = 0;
@@ -730,7 +775,11 @@
       answerControls.classList.add("hidden");
       acceptingInput = false;
 
-      playSequence();
+      // ✅ Option D: kurz anzeigen und erst dann starten
+      showRoundOverlay(`Round ${currentRound} / ${config.totalRounds}`, ROUND_OVERLAY_MS);
+      setTimeout(() => {
+        playSequence();
+      }, ROUND_OVERLAY_MS);
     }
 
     function playSequence() {
@@ -789,6 +838,7 @@
       if (currentRound < config.totalRounds) {
         setTimeout(() => {
           hideFeedback();
+
           if (currentRound + 1 === config.totalRounds) {
             showAdBeforeLastRound();
           } else {
@@ -805,6 +855,7 @@
 
     function endGame() {
       hideAd();
+      hideRoundOverlay();
 
       const total = results.length;
       const correctN = results.filter((r) => r.correct).length;
@@ -852,6 +903,7 @@
       URL.revokeObjectURL(url);
     }
 
+    // EVENTS
     startButton.addEventListener("click", startGame);
     restartButton.addEventListener("click", startGame);
     downloadButton.addEventListener("click", downloadCSV);
