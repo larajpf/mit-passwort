@@ -93,7 +93,7 @@
       overflow: hidden;
     }
 
-    /* ✅ Round overlay (Option D) */
+    /* Round overlay */
     .round-overlay {
       position: absolute;
       top: 10px;
@@ -114,7 +114,6 @@
       box-shadow: 0 6px 14px rgba(0,0,0,0.12);
       font-variant-numeric: tabular-nums;
     }
-
     .round-overlay.show {
       opacity: 1;
       transform: translateY(0);
@@ -290,6 +289,7 @@
       cursor: pointer;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
       background: linear-gradient(135deg, #4f46e5, #6366f1);
       color: #e5e7eb;
@@ -308,6 +308,20 @@
     }
 
     .hidden { display: none !important; }
+
+    /* ✅ Start-Button am Anfang zentrieren */
+    .start-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .start-btn {
+      width: min(260px, 100%);
+      padding: 10px 16px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
 
     .number-buttons {
       display: flex;
@@ -374,8 +388,9 @@
       .feedback-overlay { min-width: 240px; padding: 18px 20px; }
       .phone { padding: 10px 1px; }
 
-      /* Round overlay auf Mobile etwas kleiner */
       .round-overlay { top: 8px; left: 8px; font-size: 0.74rem; padding: 5px 9px; }
+
+      .start-btn { width: 100%; }
     }
 
     @media (max-width: 360px) {
@@ -400,6 +415,11 @@
         <li>The current number inside the house is never shown – you must keep it in mind.</li>
         <li>At the end of the sequence, type how many people are inside the house now.</li>
       </ul>
+
+      <!-- ✅ Start Game Button zentriert unter der Erklärung -->
+      <div class="start-wrapper" id="pre-start-controls">
+        <button id="start-button" class="start-btn">▶ Start game</button>
+      </div>
     </div>
 
     <div class="ad-overlay" id="ad-overlay" aria-hidden="true">
@@ -414,9 +434,7 @@
         <div class="scene-inner">
           <div class="phone">
             <div class="phone-screen">
-              <!-- ✅ Round Overlay -->
               <div class="round-overlay" id="round-overlay"></div>
-
               <div class="feedback-overlay" id="feedback"></div>
 
               <div class="scene-layout">
@@ -440,9 +458,7 @@
         </div>
 
         <div class="controls controls-inline">
-          <div id="pre-start-controls">
-            <button id="start-button">▶ Start task</button>
-          </div>
+          <!-- pre-start-controls wurde in den Intro-Bereich verschoben -->
 
           <div id="answer-controls" class="hidden">
             <div class="number-buttons" id="number-buttons">
@@ -492,10 +508,7 @@
     const AD_DURATION_SECONDS = 12;
     const AD_POST_DELAY_MS = 3000;
 
-    // ✅ Round overlay duration (Option D)
-    const ROUND_OVERLAY_MS = 900;
-
-    // ✅ minimal schneller
+    const ROUND_OVERLAY_MS = 1800;
     const PEOPLE_SPEED_PX_PER_SEC = 385;
 
     const ENTER_EXTRA_PX_1 = 5;
@@ -533,7 +546,7 @@
     const startButton = document.getElementById("start-button");
     const restartButton = document.getElementById("restart-button");
     const downloadButton = document.getElementById("download-csv");
-    const preStartControls = document.getElementById("pre-start-controls");
+    const preStartControls = document.getElementById("pre-start-controls"); // jetzt im Intro
     const answerControls = document.getElementById("answer-controls");
     const postGameControls = document.getElementById("post-game-controls");
     const numberButtons = document.querySelectorAll(".number-btn");
@@ -568,7 +581,6 @@
     function hideFeedback() { feedbackEl.classList.remove("show"); }
     function hideEvent() {}
 
-    // ✅ Round overlay helpers
     function hideRoundOverlay() {
       if (roundOverlayTimeout) {
         clearTimeout(roundOverlayTimeout);
@@ -775,11 +787,8 @@
       answerControls.classList.add("hidden");
       acceptingInput = false;
 
-      // ✅ Option D: kurz anzeigen und erst dann starten
       showRoundOverlay(`Round ${currentRound} / ${config.totalRounds}`, ROUND_OVERLAY_MS);
-      setTimeout(() => {
-        playSequence();
-      }, ROUND_OVERLAY_MS);
+      setTimeout(() => { playSequence(); }, ROUND_OVERLAY_MS);
     }
 
     function playSequence() {
@@ -903,7 +912,6 @@
       URL.revokeObjectURL(url);
     }
 
-    // EVENTS
     startButton.addEventListener("click", startGame);
     restartButton.addEventListener("click", startGame);
     downloadButton.addEventListener("click", downloadCSV);
