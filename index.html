@@ -114,10 +114,7 @@
       box-shadow: 0 6px 14px rgba(0,0,0,0.12);
       font-variant-numeric: tabular-nums;
     }
-    .round-overlay.show {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    .round-overlay.show { opacity: 1; transform: translateY(0); }
 
     .feedback-overlay {
       position: absolute;
@@ -309,7 +306,6 @@
 
     .hidden { display: none !important; }
 
-    /* ✅ Start-Button am Anfang zentrieren */
     .start-wrapper {
       display: flex;
       justify-content: center;
@@ -416,7 +412,6 @@
         <li>At the end of the sequence, type how many people are inside the house now.</li>
       </ul>
 
-      <!-- ✅ Start Game Button zentriert unter der Erklärung -->
       <div class="start-wrapper" id="pre-start-controls">
         <button id="start-button" class="start-btn">▶ Start game</button>
       </div>
@@ -458,8 +453,6 @@
         </div>
 
         <div class="controls controls-inline">
-          <!-- pre-start-controls wurde in den Intro-Bereich verschoben -->
-
           <div id="answer-controls" class="hidden">
             <div class="number-buttons" id="number-buttons">
               <button class="number-btn" data-value="0">0</button>
@@ -486,7 +479,7 @@
 
           <div id="post-game-controls" class="hidden">
             <button class="btn-secondary" id="restart-button">↻ Play again</button>
-            <button id="download-csv">⬇ Download results (CSV)</button>
+            <!-- ✅ CSV Download entfernt -->
           </div>
         </div>
       </div>
@@ -545,8 +538,7 @@
 
     const startButton = document.getElementById("start-button");
     const restartButton = document.getElementById("restart-button");
-    const downloadButton = document.getElementById("download-csv");
-    const preStartControls = document.getElementById("pre-start-controls"); // jetzt im Intro
+    const preStartControls = document.getElementById("pre-start-controls");
     const answerControls = document.getElementById("answer-controls");
     const postGameControls = document.getElementById("post-game-controls");
     const numberButtons = document.querySelectorAll(".number-btn");
@@ -881,40 +873,9 @@
       hideEvent();
     }
 
-    function downloadCSV() {
-      if (!results.length) return;
-
-      const header = "round,startCount,sequence,correctFinalCount,userAnswer,correct,rtMs\n";
-      const rows = results
-        .map((r) => {
-          const seq = r.sequence.join(" ");
-          return [
-            r.round,
-            r.startCount,
-            `"${seq}"`,
-            r.correctFinalCount,
-            r.userAnswer,
-            r.correct ? 1 : 0,
-            r.rtMs,
-          ].join(",");
-        })
-        .join("\n");
-
-      const csvContent = header + rows;
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "people_in_house_results.csv";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-    }
-
+    // EVENTS
     startButton.addEventListener("click", startGame);
     restartButton.addEventListener("click", startGame);
-    downloadButton.addEventListener("click", downloadCSV);
 
     numberButtons.forEach(btn => {
       btn.addEventListener("click", () => {
